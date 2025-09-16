@@ -2,107 +2,162 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Molchos Login</title>
+  <title>MolchOS</title>
   <style>
     body {
-      background-color: #111;
-      color: white;
-      font-family: Arial, sans-serif;
-      text-align: center;
+      background-color: #000;
       margin: 0;
       padding: 0;
-    }
-    #powerButton {
-      font-size: 40px;
-      background: none;
-      border: none;
+      font-family: Arial, sans-serif;
       color: white;
-      cursor: pointer;
-      margin-top: 100px;
+      text-align: center;
     }
-    #progressContainer {
-      display: none;
-      width: 80%;
-      margin: 40px auto;
-      height: 25px;
-      background: #333;
-      border-radius: 15px;
+
+    h1 {
+      font-size: 80px;
+      margin-top: 40px;
+    }
+
+    /* Fortschrittsbalken */
+    #myProgress {
+      width: 40%;
+      background-color: #333;
+      margin: 30px auto 0;
+      border-radius: 25px;
+      height: 30px;
       overflow: hidden;
+      display: none;
     }
-    #progressBar {
+
+    #myBar {
+      height: 30px;
+      background-color: #fff;
+      border-radius: 25px;
       width: 0%;
-      height: 100%;
-      background: white;
       transition: width 0.3s ease;
     }
-    #loginBox {
+
+    /* Startbutton */
+    #startButton {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      display: block;
+      margin: 30px auto;
+      padding: 0;
+      width: 100px;
+      height: 100px;
+    }
+
+    #startButton img {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Login-Formular */
+    #loginForm {
       display: none;
-      margin-top: 40px;
-      padding: 20px;
-      background: #222;
-      border-radius: 12px;
+      margin-top: 50px;
       width: 300px;
       margin-left: auto;
       margin-right: auto;
+      background: #111;
+      padding: 20px;
+      border-radius: 15px;
     }
-    #loginBox input {
+
+    #loginForm input {
       width: 90%;
-      margin: 10px 0;
       padding: 10px;
-      border-radius: 8px;
-      border: none;
-    }
-    #loginBox button {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 8px;
-      background: white;
-      color: black;
-      cursor: pointer;
-    }
-    #debugMenu {
-      display: none;
-      position: fixed;
-      bottom: 10px;
-      right: 10px;
-      background: #444;
-      padding: 15px;
+      margin: 10px 0;
       border-radius: 10px;
-      font-size: 14px;
+      border: none;
+      font-size: 16px;
+    }
+
+    #loginForm button {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      background-color: #00ff00;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+      color: black;
+    }
+
+    #loginMessage {
+      margin-top: 10px;
+      font-weight: bold;
+      height: 20px;
+    }
+
+    /* Debug-Badge */
+    #debugBadge {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: rgba(255, 0, 0, 0.2);
+      color: #ff6b6b;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      display: none;
+    }
+
+    pre#debugBox {
+      background: #111;
+      color: lime;
+      padding: 10px;
+      text-align: left;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      margin: 20px auto;
+      width: 80%;
+      display: none;
     }
   </style>
 </head>
 <body>
+  <h1>MolchOS</h1>
 
-  <button id="powerButton">⏻</button>
+  <button id="startButton" aria-label="Start">
+    <img src="https://img.icons8.com/?size=100&id=85077&format=png&color=FFFFFF" alt="Power Button">
+  </button>
 
-  <div id="progressContainer">
-    <div id="progressBar"></div>
+  <div id="myProgress">
+    <div id="myBar"></div>
   </div>
 
-  <div id="loginBox">
+  <!-- Login -->
+  <div id="loginForm">
     <h2>Login</h2>
-    <input type="text" id="username" placeholder="Benutzername"><br>
-    <input type="password" id="password" placeholder="Passwort"><br>
+    <input type="text" id="username" placeholder="Username" autocomplete="username">
+    <input type="password" id="password" placeholder="Password" autocomplete="current-password">
     <button id="loginBtn">Login</button>
+    <div id="loginMessage"></div>
   </div>
 
-  <div id="debugMenu">
-    <p><b>Debug-Menü</b></p>
-    <p>Status: <span id="debugStatus">Gestoppt</span></p>
-  </div>
+  <div id="debugBadge">DEBUG</div>
+  <pre id="debugBox"></pre>
 
-  <!-- Firebase -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { 
+      getAuth, 
+      signInWithEmailAndPassword, 
+      createUserWithEmailAndPassword 
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyAJn62nD-a9f9ryy_8Xi0OJhojZ7_6RyOc",
       authDomain: "molchos-8432f.firebaseapp.com",
-      databaseURL: "https://molchos-8432f-default-rtdb.europe-west1.firebasedatabase.app",
       projectId: "molchos-8432f",
-      storageBucket: "molchos-8432f.firebasestorage.app",
+      storageBucket: "molchos-8432f.appspot.com",
       messagingSenderId: "863467159822",
       appId: "1:863467159822:web:f352836ffa1289f03f575f"
     };
@@ -110,78 +165,94 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const powerButton = document.getElementById("powerButton");
-    const progressContainer = document.getElementById("progressContainer");
-    const progressBar = document.getElementById("progressBar");
-    const loginBox = document.getElementById("loginBox");
+    // Elemente
+    const startButton = document.getElementById("startButton");
+    const myProgress = document.getElementById("myProgress");
+    const myBar = document.getElementById("myBar");
+    const loginForm = document.getElementById("loginForm");
     const loginBtn = document.getElementById("loginBtn");
-    const debugMenu = document.getElementById("debugMenu");
-    const debugStatus = document.getElementById("debugStatus");
+    const loginMessage = document.getElementById("loginMessage");
+    const debugBadge = document.getElementById("debugBadge");
+    const debugBox = document.getElementById("debugBox");
 
-    let progress = 0;
-    let interval;
+    let debugMode = false;
 
-    // Power button startet Ladebalken
-    powerButton.addEventListener("click", () => {
-      powerButton.style.display = "none";
-      progressContainer.style.display = "block";
+    // Debug-Log
+    function logDebug(msg, data = "") {
+      if (!debugMode) return;
+      const ts = new Date().toLocaleTimeString();
+      debugBox.textContent += `[${ts}] ${msg} ${data}\n`;
+      debugBox.scrollTop = debugBox.scrollHeight;
+    }
 
-      interval = setInterval(() => {
-        progress += Math.floor(Math.random() * 15); // random Sprünge
-        if (progress > 100) progress = 100;
-        progressBar.style.width = progress + "%";
+    // Ladebalken
+    function startProgress() {
+      myProgress.style.display = "block";
+      let width = 0;
+      const interval = setInterval(() => {
+        const step = Math.floor(Math.random() * 10) + 1; // random
+        width = Math.min(width + step, 100);
+        myBar.style.width = width + "%";
 
-        if (progress >= 100) {
+        if (width >= 100) {
           clearInterval(interval);
-          setTimeout(() => {
-            progressContainer.style.display = "none";
-            loginBox.style.display = "block";
-          }, 500);
+          myProgress.style.display = "none";
+          loginForm.style.display = "block";
         }
-      }, 400);
+      }, 500);
+    }
+
+    startButton.addEventListener("click", () => {
+      startButton.style.display = "none";
+      startProgress();
     });
 
-    // Login Handler
+    // Login
     loginBtn.addEventListener("click", async () => {
-      const uname = document.getElementById("username").value;
+      let uname = document.getElementById("username").value.trim();
       const password = document.getElementById("password").value;
 
       if (!uname || !password) {
-        alert("Bitte alle Felder ausfüllen.");
+        loginMessage.textContent = "Bitte alle Felder ausfüllen.";
+        loginMessage.style.color = "red";
         return;
       }
 
-      const email = `${uname}@molchos.app`; // gültige Domain!
+      // Email generieren
+      uname = uname.toLowerCase().replace(/[^a-z0-9]/g, "");
+      const email = `${uname}@molchos.app`;
 
       try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        alert("Login erfolgreich: " + userCredential.user.email);
+        loginMessage.textContent = "Willkommen, " + uname;
+        loginMessage.style.color = "lightgreen";
 
-        if (uname.toLowerCase() === "admin") {
+        if (uname === "admin") {
           window.location.href = "admin.html";
-        } else {
-          alert("Willkommen, " + uname);
         }
-
       } catch (error) {
         if (error.code === "auth/user-not-found") {
           try {
             const newUser = await createUserWithEmailAndPassword(auth, email, password);
-            alert("Neuer Account erstellt: " + newUser.user.email);
+            loginMessage.textContent = "Neuer Account erstellt: " + uname;
+            loginMessage.style.color = "lightgreen";
           } catch (regErr) {
-            alert("Registrierungsfehler: " + regErr.message);
+            loginMessage.textContent = "Registrierungsfehler: " + regErr.message;
+            loginMessage.style.color = "red";
           }
         } else {
-          alert("Login fehlgeschlagen: " + error.message);
+          loginMessage.textContent = "Login fehlgeschlagen: " + error.message;
+          loginMessage.style.color = "red";
         }
       }
     });
 
-    // Debug-Menü mit Taste d
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "d" || e.key === "D") {
-        debugMenu.style.display = debugMenu.style.display === "none" ? "block" : "none";
-        debugStatus.textContent = "Aktiv";
+    // Debug aktivieren mit Taste "d"
+    window.addEventListener("keydown", (e) => {
+      if (e.key.toLowerCase() === "d") {
+        debugMode = !debugMode;
+        debugBadge.style.display = debugMode ? "block" : "none";
+        debugBox.style.display = debugMode ? "block" : "none";
       }
     });
   </script>
