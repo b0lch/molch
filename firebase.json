@@ -1,7 +1,7 @@
 {
   "hosting": {
     "site": "molchos-8432f",
-    "public": "public",
+    "public": ".",
     "ignore": [
       "firebase.json",
       "**/.*",
