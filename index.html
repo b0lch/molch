@@ -53,18 +53,20 @@
             display: block;
             margin: 20px auto;
         }
-        .BootImage {
+          .BootImage {
           display: block;
           margin: 30px auto;
           width: 100px;      /* Adjust size as needed */
           height: auto;
           cursor: pointer;
           transition: transform 0.2s ease;
+          filter: brightness(100%) invert(100%); /* To keep it white on black background */
         }
-    
-        .BootImage:hover {
-          transform: scale(1.1); /* Slight zoom effect on hover */
-    }
+
+          .BootImage:hover {
+            transform: scale(1.1); /* Slight zoom effect on hover */
+        }
+
 
     </style>
 </head>
@@ -72,11 +74,11 @@
 
     <h1>MolchOS</h1>
 
-  <img
-      src="https://img.icons8.com/ios-filled/100/ffffff/power-off-button.png"
-      id="startButton"
-      alt="Start Button"
-      class="BootImage"
+ <img
+  src="https://cdn.citypng.com/public/uploads/preview/power-on-off-white-button-icon-png-11563114816pmw6gxzpzp.png"
+  id="startButton"
+  alt="Start Button"
+  class="BootImage"
 />
 
 
