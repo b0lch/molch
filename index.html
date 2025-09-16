@@ -78,7 +78,7 @@
       pointer-events: none;
     }
 
-    /* Login form styles */
+    /* Login form */
     #loginForm {
       display: none;
       margin-top: 50px;
@@ -138,7 +138,46 @@
       font-size: 22px;
     }
 
-    /* small debug badge to show mode */
+    /* Admin panel */
+    #adminPanel {
+      display: none;
+      margin-top: 30px;
+      padding: 20px;
+      background: #222;
+      border-radius: 10px;
+      width: 320px;
+      margin-left: auto;
+      margin-right: auto;
+      text-align: left;
+    }
+
+    #adminPanel input {
+      width: 90%;
+      padding: 8px;
+      margin: 8px 0;
+      border-radius: 8px;
+      border: none;
+    }
+
+    #adminPanel button {
+      margin-top: 8px;
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      background-color: #ffcc00;
+      font-weight: bold;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    #adminMessage {
+      margin-top: 10px;
+      font-size: 14px;
+      min-height: 20px;
+    }
+
+    /* Debug badge */
     #debugBadge {
       position: fixed;
       top: 10px;
@@ -151,6 +190,33 @@
       display: none;
       pointer-events: none;
       z-index: 9999;
+    }
+
+    /* Hidden debug button for mobile */
+    #debugToggleBtn {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      background: #222;
+      color: #0f0;
+      font-size: 14px;
+      border: 1px solid #0f0;
+      z-index: 9999;
+      cursor: pointer;
+      opacity: 0.8;
+    }
+
+    #debugToggleBtn:active {
+      opacity: 1;
+    }
+
+    @media (max-width: 768px) {
+      #debugToggleBtn {
+        display: block;
+      }
     }
   </style>
 </head>
@@ -181,7 +247,17 @@
     <div id="loginMessage"></div>
   </div>
 
+  <!-- Admin Panel -->
+  <div id="adminPanel">
+    <h2>Admin Panel</h2>
+    <input type="text" id="newUserName" placeholder="New Username">
+    <input type="password" id="newUserPass" placeholder="New Password">
+    <button id="createUserBtn">Create User</button>
+    <div id="adminMessage"></div>
+  </div>
+
   <div id="debugBadge">DEBUG</div>
+  <button id="debugToggleBtn">Debug</button>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -216,6 +292,14 @@
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
     const debugBadge = document.getElementById('debugBadge');
+    const debugToggleBtn = document.getElementById('debugToggleBtn');
+
+    // Admin panel refs
+    const adminPanel = document.getElementById("adminPanel");
+    const newUserName = document.getElementById("newUserName");
+    const newUserPass = document.getElementById("newUserPass");
+    const createUserBtn = document.getElementById("createUserBtn");
+    const adminMessage = document.getElementById("adminMessage");
 
     // ---------- Debug box ----------
     let debugMode = false;
@@ -242,16 +326,10 @@
     }
 
     // ---------- Progress control ----------
-    // defaults (normal slow boot)
-    let progressSpeed = 2000; // ms per tick
-    let incrementMin = 1;     // percent min per tick
-    let incrementMax = 8;     // percent max per tick
-
+    let progressSpeed = 2000;
+    let incrementMin = 1;
+    let incrementMax = 8;
     let progressInterval = null;
-
-    // ensure bar starts at 0
-    bar.style.width = '0%';
-    progressText.textContent = '0%';
 
     function setProgress(value) {
       bar.style.width = value + '%';
@@ -263,7 +341,6 @@
       const rand = Math.floor(Math.random() * (incrementMax - incrementMin + 1)) + incrementMin;
       const newWidth = Math.min(currentWidth + rand, 100);
       setProgress(newWidth);
-      logDebug("Progress tick:", { currentWidth, rand, newWidth });
 
       if (newWidth >= 100) {
         clearInterval(progressInterval);
@@ -272,22 +349,18 @@
         document.getElementById('myProgress').style.display = 'none';
         loginForm.style.display = 'block';
         usernameInput.focus();
-        logDebug("Progress completed, showing login form");
       }
     }
 
     function startProgress() {
       if (progressInterval) return;
       progressInterval = setInterval(progressTick, progressSpeed);
-      logDebug("Started progress interval", { progressSpeed, incrementMin, incrementMax });
     }
 
     function restartProgressIntervalIfRunning() {
-      // Called when speed/interval parameters changed while running
       if (!progressInterval) return;
       clearInterval(progressInterval);
       progressInterval = setInterval(progressTick, progressSpeed);
-      logDebug("Restarted progress interval with new speed", { progressSpeed, incrementMin, incrementMax });
     }
 
     function resetProgress() {
@@ -296,7 +369,6 @@
       setProgress(0);
     }
 
-    // ---------- UI wiring ----------
     startButton.addEventListener('click', () => {
       resetProgress();
       startProgress();
@@ -307,10 +379,9 @@
       loginMessage.textContent = msg;
       loginMessage.style.color = color;
       loginMessage.className = fancy ? 'fancy-text' : '';
-      logDebug("UI message:", msg);
     }
 
-    // ---------- Auth (username -> username@molchos.local) ----------
+    // ---------- Auth ----------
     async function tryLogin() {
       const username = usernameInput.value.trim();
       const password = passwordInput.value;
@@ -321,14 +392,13 @@
       }
 
       const email = `${username}@molchos.local`;
-      logDebug("Attempting login for", { username, email });
 
       try {
         const cred = await signInWithEmailAndPassword(auth, email, password);
-        logDebug("signInWithEmailAndPassword result", cred.user);
 
         if (username === 'admin') {
           showMessage('Willkommen Bo.', 'lightgreen', true);
+          adminPanel.style.display = "block";
         } else {
           showMessage(`Login successful! Welcome, ${username}.`);
         }
@@ -338,29 +408,25 @@
         loginBtn.disabled = true;
         guestLoginBtn.disabled = true;
       } catch (error) {
-        logDebug("Login error:", error);
-        // create user if not found (auto-register)
-        if (error && error.code === 'auth/user-not-found') {
+        if (error.code === 'auth/user-not-found') {
           try {
-            const newUser = await createUserWithEmailAndPassword(auth, email, password);
-            logDebug("createUserWithEmailAndPassword result", newUser.user);
+            await createUserWithEmailAndPassword(auth, email, password);
             showMessage(`New account created! Welcome, ${username}.`);
-            usernameInput.disabled = true;
-            passwordInput.disabled = true;
-            loginBtn.disabled = true;
-            guestLoginBtn.disabled = true;
+            if (username === 'admin') {
+              adminPanel.style.display = "block";
+            }
           } catch (err) {
-            logDebug("Error creating account:", err);
-            showMessage('Error creating account: ' + (err && err.message ? err.message : String(err)), 'red');
+            showMessage('Error creating account: ' + err.message, 'red');
           }
+        } else if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+          showMessage('❌ Wrong password for ' + username, 'red');
         } else {
-          showMessage('Login failed: ' + (error && error.message ? error.message : String(error)), 'red');
+          showMessage('Login failed: ' + error.message, 'red');
         }
       }
     }
 
     loginBtn.addEventListener('click', tryLogin);
-
     [usernameInput, passwordInput].forEach(input => {
       input.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
@@ -374,36 +440,48 @@
       showMessage('Guest accounts are disabled. Please choose a username.', 'red');
     });
 
-    // ---------- Debug toggle (press "d") ----------
-    window.addEventListener("keydown", (e) => {
-      // make sure single-letter 'd' toggles; don't block control combos
-      if (e.key && e.key.toLowerCase() === "d" && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        debugMode = !debugMode;
-        debugBox.style.display = debugMode ? "block" : "none";
-        debugBadge.style.display = debugMode ? "block" : "none";
-
-        if (debugMode) {
-          // faster debug speeds
-          progressSpeed = 200;    // 200ms per tick (fast)
-          incrementMin = 5;
-          incrementMax = 15;
-          debugBox.textContent = "[DEBUG] enabled\n";
-          logDebug("Debug enabled", { progressSpeed, incrementMin, incrementMax });
-        } else {
-          // revert to normal slow boot
-          progressSpeed = 2000;
-          incrementMin = 1;
-          incrementMax = 8;
-          debugBox.textContent = "";
-          logDebug("Debug disabled, reverting speeds", { progressSpeed, incrementMin, incrementMax });
-        }
-
-        // If progress is running, restart interval to apply new speed
-        restartProgressIntervalIfRunning();
+    // ---------- Admin Panel ----------
+    createUserBtn.addEventListener("click", async () => {
+      const uname = newUserName.value.trim();
+      const upass = newUserPass.value;
+      if (!uname || !upass) {
+        adminMessage.textContent = "Enter username + password.";
+        return;
+      }
+      const email = `${uname}@molchos.local`;
+      try {
+        await createUserWithEmailAndPassword(auth, email, upass);
+        adminMessage.textContent = `✅ User ${uname} created.`;
+        newUserName.value = "";
+        newUserPass.value = "";
+      } catch (err) {
+        adminMessage.textContent = `❌ ${err.message}`;
       }
     });
 
-    // ---------- initialize ----------
+    // ---------- Debug toggle ----------
+    function toggleDebug() {
+      debugMode = !debugMode;
+      debugBox.style.display = debugMode ? "block" : "none";
+      debugBadge.style.display = debugMode ? "block" : "none";
+
+      if (debugMode) {
+        progressSpeed = 200; incrementMin = 5; incrementMax = 15;
+      } else {
+        progressSpeed = 2000; incrementMin = 1; incrementMax = 8;
+      }
+
+      restartProgressIntervalIfRunning();
+    }
+
+    debugToggleBtn.addEventListener("click", toggleDebug);
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key && e.key.toLowerCase() === "d" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        toggleDebug();
+      }
+    });
+
     resetProgress();
   </script>
 </body>
