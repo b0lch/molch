@@ -2,33 +2,77 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>MolchOS Admin</title>
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Molchos Admin</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #111;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    .logout-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      background: white;
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    .logout-btn:hover {
+      background: #ddd;
+    }
+  </style>
 </head>
 <body>
-  <h1>Admin Konsole</h1>
-
-  <div id="create-user-box">
-    <input type="email" id="newEmail" placeholder="Neue E-Mail">
-    <input type="password" id="newPassword" placeholder="Neues Passwort">
-    <button id="createUserBtn">User anlegen</button>
-    <p id="admin-error"></p>
-  </div>
+  <h1>Willkommen im Admin Panel</h1>
+  <p>Du bist erfolgreich eingeloggt.</p>
+  <button class="logout-btn" id="logout-btn">Logout</button>
 
   <script type="module">
-    import { auth } from "./src/firebase.js";
-    import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-    document.getElementById("createUserBtn").addEventListener("click", async () => {
-      const email = document.getElementById("newEmail").value;
-      const password = document.getElementById("newPassword").value;
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAJn62nD-a9f9ryy_8Xi0OJhojZ7_6RyOc",
+      authDomain: "molchos-8432f.firebaseapp.com",
+      databaseURL: "https://molchos-8432f-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "molchos-8432f",
+      storageBucket: "molchos-8432f.firebasestorage.app",
+      messagingSenderId: "863467159822",
+      appId: "1:863467159822:web:f352836ffa1289f03f575f"
+    };
 
-      try {
-        await createUserWithEmailAndPassword(auth, email, password);
-        alert("User " + email + " erfolgreich angelegt!");
-      } catch (err) {
-        document.getElementById("admin-error").innerText = "Fehler: " + err.message;
+    // Init Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // Check ob User eingeloggt ist
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = "index.html"; // wenn nicht eingeloggt → zurück zum Login
       }
+    });
+
+    // Logout-Button
+    document.getElementById("logout-btn").addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.href = "index.html"; // zurück zum Login
     });
   </script>
 </body>
