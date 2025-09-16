@@ -1,0 +1,82 @@
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  background: #111;
+  color: white;
+}
+
+#login-box, #create-user-box {
+  margin: 20px auto;
+  padding: 20px;
+  background: #222;
+  border-radius: 10px;
+  width: 300px;
+}
+
+input {
+  display: block;
+  margin: 10px auto;
+  padding: 8px;
+  width: 90%;
+}
+
+button {
+  padding: 10px 20px;
+  background: #6c63ff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#progressbar {
+  width: 100%;
+  height: 20px;
+  background: #333;
+  border-radius: 10px;
+  margin: 20px auto;
+  overflow: hidden;
+}
+
+#progress {
+  height: 100%;
+  width: 0%;
+  background: limegreen;
+}
+/* Ladebalken Container */
+#progressbar {
+  width: 80%;
+  height: 25px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  overflow: hidden;
+  margin: 15px auto;
+  box-shadow: 0 0 10px rgba(0, 255, 128, 0.3);
+}
+
+/* Fortschritt mit Glow + Farbverlauf */
+#progress {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #00ff88, #00b7ff, #9d00ff);
+  background-size: 300% 100%;
+  border-radius: 15px;
+  animation: gradientShift 3s infinite linear;
+  transition: width 0.4s ease;
+  box-shadow: 0 0 15px rgba(0, 255, 128, 0.8);
+}
+
+/* Farbverlauf bewegt sich */
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+/* Prozent-Anzeige */
+#progress-text {
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #00ff88;
+  text-shadow: 0 0 10px #00ff88;
+}
+

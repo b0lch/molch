@@ -1,29 +1,33 @@
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Admin Panel</title>
+  <title>MolchOS Admin</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h2>Admin Panel – Nutzer anlegen</h2>
-  <input id="newEmail" type="email" placeholder="Neue Email">
-  <input id="newPassword" type="password" placeholder="Neues Passwort">
-  <button id="createUserBtn">Nutzer erstellen</button>
+  <h1>Admin Konsole</h1>
+
+  <div id="create-user-box">
+    <input type="email" id="newEmail" placeholder="Neue E-Mail">
+    <input type="password" id="newPassword" placeholder="Neues Passwort">
+    <button id="createUserBtn">User anlegen</button>
+    <p id="admin-error"></p>
+  </div>
 
   <script type="module">
     import { auth } from "./src/firebase.js";
     import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
 
-    const createUserBtn = document.getElementById("createUserBtn");
-    createUserBtn.addEventListener("click", async () => {
-      const newEmail = document.getElementById("newEmail").value;
-      const newPassword = document.getElementById("newPassword").value;
+    document.getElementById("createUserBtn").addEventListener("click", async () => {
+      const email = document.getElementById("newEmail").value;
+      const password = document.getElementById("newPassword").value;
 
       try {
-        await createUserWithEmailAndPassword(auth, newEmail, newPassword);
-        alert("Neuer Nutzer erstellt: " + newEmail);
-      } catch (error) {
-        alert("Fehler: " + error.message);
+        await createUserWithEmailAndPassword(auth, email, password);
+        alert("User " + email + " erfolgreich angelegt!");
+      } catch (err) {
+        document.getElementById("admin-error").innerText = "Fehler: " + err.message;
       }
     });
   </script>

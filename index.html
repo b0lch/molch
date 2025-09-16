@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<<<<<<< HEAD
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -258,6 +259,35 @@
 
   <div id="debugBadge">DEBUG</div>
   <button id="debugToggleBtn">Debug</button>
+=======
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>MolchOS Login</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Willkommen bei MolchOS</h1>
+
+  <div id="login-box">
+    <input type="email" id="email" placeholder="E-Mail eingeben">
+    <input type="password" id="password" placeholder="Passwort">
+    <button id="loginBtn">Login</button>
+    <p id="login-error"></p>
+  </div>
+
+  <!-- Ladebalken -->
+  <div id="loading" style="display:none;">
+    <p>Lädt...</p>
+    <div id="progressbar">
+      <div id="progress"></div>
+    </div>
+    <p id="progress-text">0%</p>
+  </div>
+
+  <!-- Debug Button für Mobile -->
+  <button id="debugBtn" style="display:none;">Debug</button>
+>>>>>>> c53ed156f57340d9f15ad1bdb49479d9c68c0dc6
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -390,6 +420,7 @@
 
       const email = `${username}@molchos.local`;
 
+<<<<<<< HEAD
       try {
         const cred = await signInWithEmailAndPassword(auth, email, password);
 
@@ -453,6 +484,61 @@
         newUserPass.value = "";
       } catch (err) {
         adminMessage.textContent = `❌ ${err.message}`;
+=======
+    let debugMode = false;
+
+    // Debug per Taste "D"
+    document.addEventListener("keydown", (e) => {
+      if (e.key.toLowerCase() === "d") {
+        debugMode = !debugMode;
+        alert("Debug-Modus: " + (debugMode ? "AN" : "AUS"));
+      }
+    });
+
+    // Debug Button für Mobile
+    if (/Mobi|Android/i.test(navigator.userAgent)) {
+      document.getElementById("debugBtn").style.display = "block";
+      document.getElementById("debugBtn").addEventListener("click", () => {
+        debugMode = !debugMode;
+        alert("Debug-Modus: " + (debugMode ? "AN" : "AUS"));
+      });
+    }
+
+    // Login-Logik
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+
+        document.getElementById("login-box").style.display = "none";
+        document.getElementById("loading").style.display = "block";
+
+        let progress = 0;
+        const step = debugMode ? 20 : 5;
+        const speed = debugMode ? 100 : 300;
+
+        const interval = setInterval(() => {
+          progress += step;
+          if (progress > 100) progress = 100;
+
+          document.getElementById("progress").style.width = progress + "%";
+          document.getElementById("progress-text").innerText = progress + "%";
+
+          if (progress >= 100) {
+            clearInterval(interval);
+
+            if (email === "admin@molchos.local") {
+              window.location.href = "admin.html";
+            } else {
+              alert("Eingeloggt als User: " + email);
+            }
+          }
+        }, speed);
+      } catch (err) {
+        document.getElementById("login-error").innerText = "Login fehlgeschlagen: " + err.message;
+>>>>>>> c53ed156f57340d9f15ad1bdb49479d9c68c0dc6
       }
     });
 
