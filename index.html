@@ -1,36 +1,485 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Login</title>
+  <meta charset="UTF-8" />
+  <title>MolchOS</title>
+  <link href="https://fonts.googleapis.com/css2?family=Moo+Lah+Lah&family=Rock+3D&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      background-color: #000;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      color: white;
+      text-align: center;
+    }
+
+    h1 {
+      font-family: 'Rock 3D', cursive;
+      font-size: 100px;
+      margin-top: 40px;
+    }
+
+    #myProgress {
+      width: 25%;
+      background-color: grey;
+      margin: 30px auto 0;
+      border-radius: 25px;
+      height: 30px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #myBar {
+      height: 30px;
+      background-color: #fff;
+      border-radius: 25px;
+      width: 0%;
+      transition: width 0.25s linear;
+    }
+
+    #progressText {
+      position: absolute;
+      width: 100%;
+      text-align: center;
+      line-height: 30px;
+      font-weight: bold;
+      color: black;
+      user-select: none;
+    }
+
+    button#startButton {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      display: block;
+      margin: 30px auto;
+      padding: 0;
+      width: 100px;
+      height: 100px;
+      transition: transform 0.2s ease;
+      outline-offset: 4px;
+    }
+
+    button#startButton:disabled {
+      cursor: default;
+      opacity: 1;
+    }
+
+    button#startButton:hover:not(:disabled) {
+      transform: scale(1.1);
+    }
+
+    button#startButton img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    /* Login form */
+    #loginForm {
+      display: none;
+      margin-top: 50px;
+      width: 300px;
+      margin-left: auto;
+      margin-right: auto;
+      background: #111;
+      padding: 20px;
+      border-radius: 15px;
+    }
+
+    #loginForm input[type="text"],
+    #loginForm input[type="password"] {
+      width: 90%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 10px;
+      border: none;
+      font-size: 16px;
+    }
+
+    #loginForm button {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      background-color: #00ff00;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+      color: black;
+      transition: background-color 0.3s ease;
+    }
+
+    #loginForm button:hover {
+      background-color: #00cc00;
+    }
+
+    #guestLoginBtn {
+      margin-top: 10px;
+      background-color: #444;
+      color: white;
+    }
+
+    #guestLoginBtn:hover {
+      background-color: #666;
+    }
+
+    #loginMessage {
+      margin-top: 10px;
+      height: 30px;
+      font-weight: bold;
+    }
+
+    .fancy-text {
+      font-family: 'Moo Lah Lah', cursive;
+      font-size: 22px;
+    }
+
+    /* Admin panel */
+    #adminPanel {
+      display: none;
+      margin-top: 30px;
+      padding: 20px;
+      background: #222;
+      border-radius: 10px;
+      width: 320px;
+      margin-left: auto;
+      margin-right: auto;
+      text-align: left;
+    }
+
+    #adminPanel input {
+      width: 90%;
+      padding: 8px;
+      margin: 8px 0;
+      border-radius: 8px;
+      border: none;
+    }
+
+    #adminPanel button {
+      margin-top: 8px;
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      background-color: #ffcc00;
+      font-weight: bold;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    #adminMessage {
+      margin-top: 10px;
+      font-size: 14px;
+      min-height: 20px;
+    }
+
+    /* Debug badge */
+    #debugBadge {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: rgba(255, 0, 0, 0.15);
+      color: #ff6b6b;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      display: none;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* Hidden debug button for mobile */
+    #debugToggleBtn {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      background: #222;
+      color: #0f0;
+      font-size: 14px;
+      border: 1px solid #0f0;
+      z-index: 9999;
+      cursor: pointer;
+      opacity: 0.8;
+    }
+
+    #debugToggleBtn:active {
+      opacity: 1;
+    }
+
+    @media (max-width: 768px) {
+      #debugToggleBtn {
+        display: block;
+      }
+    }
+  </style>
 </head>
 <body>
-  <h2>Login</h2>
-  <input id="email" type="email" placeholder="Email">
-  <input id="password" type="password" placeholder="Password">
-  <button id="loginBtn">Login</button>
+
+  <h1>MolchOS</h1>
+
+  <button id="startButton" aria-label="Start Progress">
+    <img
+      src="https://img.icons8.com/?size=100&id=85077&format=png&color=FFFFFF"
+      alt="Power Button Icon"
+      draggable="false"
+    />
+  </button>
+
+  <div id="myProgress">
+    <div id="myBar"></div>
+    <span id="progressText">0%</span>
+  </div>
+
+  <!-- Login Form -->
+  <div id="loginForm">
+    <h2>Login</h2>
+    <input type="text" id="username" placeholder="Username" autocomplete="username" />
+    <input type="password" id="password" placeholder="Password" autocomplete="current-password" />
+    <button id="loginBtn">Login</button>
+    <button id="guestLoginBtn">Login as Guest</button>
+    <div id="loginMessage"></div>
+  </div>
+
+  <!-- Admin Panel -->
+  <div id="adminPanel">
+    <h2>Admin Panel</h2>
+    <input type="text" id="newUserName" placeholder="New Username">
+    <input type="password" id="newUserPass" placeholder="New Password">
+    <button id="createUserBtn">Create User</button>
+    <div id="adminMessage"></div>
+  </div>
+
+  <div id="debugBadge">DEBUG</div>
+  <button id="debugToggleBtn">Debug</button>
 
   <script type="module">
-    import { auth } from "./src/firebase.js";
-    import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-    const loginBtn = document.getElementById("loginBtn");
-    loginBtn.addEventListener("click", async () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+    const firebaseConfig = {
+      apiKey: "AIzaSyAJn62nD-a9f9ryy_8Xi0OJhojZ7_6RyOc",
+      authDomain: "molchos-8432f.firebaseapp.com",
+      databaseURL: "https://molchos-8432f-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "molchos-8432f",
+      storageBucket: "molchos-8432f.firebasedatabase.app",
+      messagingSenderId: "863467159822",
+      appId: "1:863467159822:web:f352836ffa1289f03f575f"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // UI refs
+    const bar = document.getElementById('myBar');
+    const progressText = document.getElementById('progressText');
+    const startButton = document.getElementById('startButton');
+    const loginForm = document.getElementById('loginForm');
+    const loginBtn = document.getElementById('loginBtn');
+    const guestLoginBtn = document.getElementById('guestLoginBtn');
+    const loginMessage = document.getElementById('loginMessage');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const debugBadge = document.getElementById('debugBadge');
+    const debugToggleBtn = document.getElementById('debugToggleBtn');
+    const adminPanel = document.getElementById("adminPanel");
+    const newUserName = document.getElementById("newUserName");
+    const newUserPass = document.getElementById("newUserPass");
+    const createUserBtn = document.getElementById("createUserBtn");
+    const adminMessage = document.getElementById("adminMessage");
+
+    // Debug box
+    let debugMode = false;
+    const debugBox = document.createElement("pre");
+    debugBox.style.background = "#111";
+    debugBox.style.color = "lime";
+    debugBox.style.padding = "10px";
+    debugBox.style.textAlign = "left";
+    debugBox.style.fontSize = "12px";
+    debugBox.style.maxHeight = "200px";
+    debugBox.style.overflowY = "auto";
+    debugBox.style.margin = "20px auto";
+    debugBox.style.width = "80%";
+    debugBox.style.display = "none";
+    debugBox.id = "debugBox";
+    document.body.appendChild(debugBox);
+
+    function logDebug(label, data = "") {
+      if (!debugMode) return;
+      const ts = new Date().toLocaleTimeString();
+      const payload = (typeof data === "object") ? JSON.stringify(data, null, 2) : String(data);
+      debugBox.textContent += `[${ts}] ${label} ${payload}\n`;
+      debugBox.scrollTop = debugBox.scrollHeight;
+    }
+
+    // Progress
+    let progressSpeed = 2000;
+    let incrementMin = 1;
+    let incrementMax = 8;
+    let progressInterval = null;
+
+    function setProgress(value) {
+      bar.style.width = value + '%';
+      progressText.textContent = Math.round(value) + '%';
+    }
+
+    function progressTick() {
+      let currentWidth = parseFloat(bar.style.width) || 0;
+      const rand = Math.floor(Math.random() * (incrementMax - incrementMin + 1)) + incrementMin;
+      const newWidth = Math.min(currentWidth + rand, 100);
+      setProgress(newWidth);
+
+      if (newWidth >= 100) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+        startButton.style.display = 'none';
+        document.getElementById('myProgress').style.display = 'none';
+        loginForm.style.display = 'block';
+        usernameInput.focus();
+      }
+    }
+
+    function startProgress() {
+      if (progressInterval) return;
+      progressInterval = setInterval(progressTick, progressSpeed);
+    }
+
+    function restartProgressIntervalIfRunning() {
+      if (!progressInterval) return;
+      clearInterval(progressInterval);
+      progressInterval = setInterval(progressTick, progressSpeed);
+    }
+
+    function resetProgress() {
+      clearInterval(progressInterval);
+      progressInterval = null;
+      setProgress(0);
+    }
+
+    startButton.addEventListener('click', () => {
+      resetProgress();
+      startProgress();
+      startButton.disabled = true;
+    });
+
+    function showMessage(msg, color = 'lightgreen', fancy = false) {
+      loginMessage.textContent = msg;
+      loginMessage.style.color = color;
+      loginMessage.className = fancy ? 'fancy-text' : '';
+    }
+
+    // Auth
+    async function tryLogin() {
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value;
+
+      if (!username || !password) {
+        showMessage('Please enter both username and password.', 'red');
+        return;
+      }
+
+      const email = `${username}@molchos.local`;
+
       try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
+        const cred = await signInWithEmailAndPassword(auth, email, password);
 
-        if (user.email === "admin@molchos.local") {
-          window.location.href = "admin.html";
+        if (username === 'admin') {
+          showMessage('Willkommen Bo.', 'lightgreen', true);
+          adminPanel.style.display = "block";
         } else {
-          alert("Willkommen " + user.email);
+          showMessage(`Login successful! Welcome, ${username}.`);
         }
+
+        usernameInput.disabled = true;
+        passwordInput.disabled = true;
+        loginBtn.disabled = true;
+        guestLoginBtn.disabled = true;
       } catch (error) {
-        alert("Fehler: " + error.message);
+        if (error.code === 'auth/user-not-found') {
+          try {
+            await createUserWithEmailAndPassword(auth, email, password);
+            showMessage(`New account created! Welcome, ${username}.`);
+            if (username === 'admin') {
+              adminPanel.style.display = "block";
+            }
+          } catch (err) {
+            showMessage('Error creating account: ' + err.message, 'red');
+          }
+        } else if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+          showMessage('❌ Wrong password for ' + username, 'red');
+        } else {
+          showMessage('Login failed: ' + error.message, 'red');
+        }
+      }
+    }
+
+    loginBtn.addEventListener('click', tryLogin);
+    [usernameInput, passwordInput].forEach(input => {
+      input.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          tryLogin();
+        }
+      });
+    });
+
+    guestLoginBtn.addEventListener('click', () => {
+      showMessage('Guest accounts are disabled. Please choose a username.', 'red');
+    });
+
+    // Admin Panel
+    createUserBtn.addEventListener("click", async () => {
+      const uname = newUserName.value.trim();
+      const upass = newUserPass.value;
+      if (!uname || !upass) {
+        adminMessage.textContent = "Enter username + password.";
+        return;
+      }
+      const email = `${uname}@molchos.local`;
+      try {
+        await createUserWithEmailAndPassword(auth, email, upass);
+        adminMessage.textContent = `✅ User ${uname} created.`;
+        newUserName.value = "";
+        newUserPass.value = "";
+      } catch (err) {
+        adminMessage.textContent = `❌ ${err.message}`;
       }
     });
+
+    // Debug
+    function toggleDebug() {
+      debugMode = !debugMode;
+      debugBox.style.display = debugMode ? "block" : "none";
+      debugBadge.style.display = debugMode ? "block" : "none";
+
+      if (debugMode) {
+        progressSpeed = 200; incrementMin = 5; incrementMax = 15;
+      } else {
+        progressSpeed = 2000; incrementMin = 1; incrementMax = 8;
+      }
+
+      restartProgressIntervalIfRunning();
+    }
+
+    debugToggleBtn.addEventListener("click", toggleDebug);
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key && e.key.toLowerCase() === "d" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        toggleDebug();
+      }
+    });
+
+    resetProgress();
   </script>
 </body>
 </html>
