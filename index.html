@@ -148,13 +148,15 @@
     const loginForm = document.getElementById('loginForm');
     const loginBtn = document.getElementById('loginBtn');
     const loginMessage = document.getElementById('loginMessage');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
 
     // Simple user database (username: password)
-    // To add new users: just add a new key:value pair here
     const users = {
       'alice': 'password123',
       'bob': 'qwerty',
       'charlie': 'letmein',
+      'admin': 'password',
     };
 
     let progressInterval = null;
@@ -183,10 +185,11 @@
         if (newWidth >= 100) {
           clearInterval(progressInterval);
           progressInterval = null;
-          // Instead of alert, show login form
+          // Show login form
           startButton.style.display = 'none';
           document.getElementById('myProgress').style.display = 'none';
           loginForm.style.display = 'block';
+          usernameInput.focus();
         }
       }, 2000);
     }
@@ -197,27 +200,38 @@
       startButton.disabled = true;
     });
 
-    loginBtn.addEventListener('click', () => {
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value;
+    function tryLogin() {
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value;
 
       if (!username || !password) {
+        loginMessage.style.color = 'red';
         loginMessage.textContent = 'Please enter both username and password.';
         return;
       }
 
       if (users[username] && users[username] === password) {
         loginMessage.style.color = 'lightgreen';
-        loginMessage.textContent = 'Login successful! Welcome, ' + username + '.';
-        // Here you can redirect to another page or show the main app UI
-        // For demo, just clear form and disable inputs:
-        document.getElementById('username').disabled = true;
-        document.getElementById('password').disabled = true;
+        loginMessage.textContent = `Login successful! Welcome, ${username}.`;
+        usernameInput.disabled = true;
+        passwordInput.disabled = true;
         loginBtn.disabled = true;
       } else {
         loginMessage.style.color = 'red';
         loginMessage.textContent = 'Invalid username or password.';
       }
+    }
+
+    loginBtn.addEventListener('click', tryLogin);
+
+    // Submit login on Enter key press for username and password fields
+    [usernameInput, passwordInput].forEach(input => {
+      input.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault(); // prevent form submission or page reload
+          tryLogin();
+        }
+      });
     });
 
     resetProgress();
