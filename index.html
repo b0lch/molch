@@ -1,141 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <title>Molch Progress</title>
-    <link href="https://fonts.googleapis.com/css2?family=Moo+Lah+Lah&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Rock+3D&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8" />
+  <title>Molch Progress</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Moo+Lah+Lah&display=swap"
+    rel="stylesheet"
+  />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Rock+3D&display=swap"
+    rel="stylesheet"
+  />
 
-    <style>
-        body {
-            background-color: rgb(0, 0, 0);
-            margin: 0;
-            padding: 0;
-        }
-        h1 {
-            color: rgb(255, 255, 255);
-            text-align: center;
-            font-family: 'Rock 3D', cursive;
-            font-size: 100px;
-            margin-top: 40px;
-        }
-        #myProgress {
-            width: 25%;
-            background-color: grey;
-            margin: 0 auto;
-            border-radius: 25px;
-            margin-top: 30px;
-            height: 30px;
-            overflow: hidden;
-        }
-        #myBar {
-            height: 30px;
-            background-color: rgb(255, 255, 255);
-            border-radius: 25px;
-            width: 0%;
-            transition: width 0.5s ease;
-            position: relative;
-        }
-        #progressText {
-            text-align: center;
-            line-height: 30px;
-            font-weight: bold;
-            color: black;
-            position: absolute;
-            width: 100%;
-            left: 0;
-            top: 0;
-            user-select: none;
-        }
-        .BootImage {
-            display: block;
-            margin: 30px auto;
-            width: 100px; /* Adjust size as needed */
-            height: auto;
-            cursor: pointer;
-            transition: transform 0.2s ease;
-            filter: invert(100%) brightness(150%); /* white icon on black background */
-        }
-        .BootImage:hover {
-            transform: scale(1.1); /* Slight zoom effect on hover */
-        }
-    </style>
+  <style>
+    body {
+      background-color: #000;
+      margin: 0;
+      padding: 0;
+    }
+    h1 {
+      color: #fff;
+      text-align: center;
+      font-family: 'Rock 3D', cursive;
+      font-size: 100px;
+      margin-top: 40px;
+    }
+    #myProgress {
+      width: 25%;
+      background-color: grey;
+      margin: 30px auto 0;
+      border-radius: 25px;
+      height: 30px;
+      overflow: hidden;
+      position: relative;
+    }
+    #myBar {
+      height: 30px;
+      background-color: #fff;
+      border-radius: 25px;
+      width: 0%;
+      transition: width 0.5s ease;
+    }
+    #progressText {
+      position: absolute;
+      width: 100%;
+      text-align: center;
+      line-height: 30px;
+      font-weight: bold;
+      color: black;
+      user-select: none;
+    }
+    .BootImage {
+      display: block;
+      margin: 30px auto;
+      width: 100px;
+      height: 100px;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    .BootImage:hover {
+      transform: scale(1.1);
+    }
+  </style>
 </head>
 <body>
+  <h1>MolchOS</h1>
 
-    <h1>MolchOS</h1>
+  <!-- Using a direct stable URL for the third image -->
+  <img
+    src="https://cdn-icons-png.flaticon.com/512/992/992683.png"
+    id="startButton"
+    alt="Start Button"
+    class="BootImage"
+  />
 
-    <!-- Updated power button image -->
-    <img
-        src="https://cdn.citypng.com/public/uploads/preview/power-on-off-white-button-icon-png-11563114816pmw6gxzpzp.png"
-        id="startButton"
-        alt="Start Button"
-        class="BootImage"
-    />
+  <div id="myProgress">
+    <div id="myBar"></div>
+    <span id="progressText">0%</span>
+  </div>
 
-    <div id="myProgress">
-        <div id="myBar">
-            <span id="progressText">0%</span>
-        </div>
-    </div>
+  <script>
+    const bar = document.getElementById('myBar');
+    const progressText = document.getElementById('progressText');
+    const startButton = document.getElementById('startButton');
 
-    <script>
-        const bar = document.getElementById("myBar");
-        const progressText = document.getElementById("progressText");
+    let progressInterval = null;
 
-        let progressInterval = null;
+    function setProgress(value) {
+      bar.style.width = value + '%';
+      progressText.textContent = value + '%';
+    }
 
-        function setProgress(value) {
-            bar.style.width = value + "%";
-            progressText.textContent = value + "%";
+    function resetProgress() {
+      clearInterval(progressInterval);
+      progressInterval = null;
+      setProgress(0);
+    }
+
+    function startProgress() {
+      if (progressInterval) return;
+
+      progressInterval = setInterval(() => {
+        let currentWidth = parseInt(bar.style.width) || 0;
+        const randomIncrement = Math.floor(Math.random() * 8) + 1;
+        const newWidth = Math.min(currentWidth + randomIncrement, 100);
+
+        setProgress(newWidth);
+
+        if (newWidth >= 100) {
+          clearInterval(progressInterval);
+          progressInterval = null;
+          startButton.disabled = false;
+          startButton.style.cursor = 'pointer';
         }
+      }, 2000);
+    }
 
-        function resetProgress() {
-            clearInterval(progressInterval);
-            progressInterval = null;
-            setProgress(0);
-        }
+    startButton.addEventListener('click', () => {
+      resetProgress();
+      startProgress();
+      startButton.disabled = true;
+      startButton.style.cursor = 'default';
+    });
 
-        function startProgress() {
-            if (progressInterval) return; // prevent multiple intervals
-
-            progressInterval = setInterval(() => {
-                let currentWidth = bar.style.width.replace('%', '');
-                let width = parseInt(currentWidth, 10) || 0;
-
-                const randomIncrement = Math.floor(Math.random() * 8) + 1;
-                width = Math.min(width + randomIncrement, 100);
-
-                setProgress(width);
-
-                console.log("Zufallszahl hinzugefügt:", randomIncrement);
-
-                if (width >= 100) {
-                    clearInterval(progressInterval);
-                    progressInterval = null;
-                    alert("Fortschritt abgeschlossen!");
-                    // Re-enable button after complete, if desired:
-                    document.getElementById("startButton").disabled = false;
-                }
-            }, 2000);
-        }
-
-        // Attach click event to button
-        const startButton = document.getElementById("startButton");
-        startButton.addEventListener("click", function () {
-            resetProgress();
-            startProgress();
-            // Disable the button while running
-            this.disabled = true;
-            this.style.cursor = 'default';
-        });
-
-        // Hide the percentage text inside the progress bar initially
-        progressText.style.display = 'block';
-
-        // Optional: Reset on page load
-        resetProgress();
-    </script>
-
+    resetProgress();
+  </script>
 </body>
 </html>
