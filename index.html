@@ -69,14 +69,14 @@
 
     <script>
         const bar = document.getElementById("myBar");
-        //const progressText = document.getElementById("progressText");
+        const progressText = document.getElementById("progressText");
 
         let progressInterval = null;
 
-        //function setProgress(value) {
-           //bar.style.width = value + "%";
-           //progressText.textContent = value + "%";
-        //}
+        function setProgress(value) {
+            bar.style.width = value + "%";
+            progressText.textContent = value + "%";
+        }
 
         function resetProgress() {
             clearInterval(progressInterval);
@@ -111,7 +111,8 @@
             resetProgress();
             startProgress();
         });
-
+        // Hide the percentage text inside the progress bar
+        progressText.style.display = 'none';
         // Optional: Reset on page load
         resetProgress();
     </script>
