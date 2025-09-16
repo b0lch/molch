@@ -54,16 +54,17 @@
             margin: 20px auto;
         }
         .BootImage {
-            display: block;
-            margin: 20px auto;
-            width: 100px; /* Adjust as needed */
-            height: auto;
-            cursor: pointer;
-            transition: transform 0.2s;
+          display: block;
+          margin: 30px auto;
+          width: 100px;      /* Adjust size as needed */
+          height: auto;
+          cursor: pointer;
+          transition: transform 0.2s ease;
         }
+    
         .BootImage:hover {
-            transform: scale(1.05);
-        }
+          transform: scale(1.1); /* Slight zoom effect on hover */
+    }
 
     </style>
 </head>
@@ -71,7 +72,12 @@
 
     <h1>MolchOS</h1>
 
-    <img src="https://i.imgur.com/2Dz5fVp.png" id="startButton" alt="Start Button" class="BootImage">
+   <img
+      src="https://www.toppng.com/public/uploads/preview/white-power-button-icon-transparent-background-203943.png"
+      id="startButton"
+      alt="Start Button"
+      class="BootImage"
+    />
 
 
     <div id="myProgress">
