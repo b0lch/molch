@@ -13,39 +13,98 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      height: 100vh;
+      justify-content: flex-start;
+      min-height: 100vh;
+      padding: 40px 20px;
       text-align: center;
     }
 
     h1 {
-      margin-bottom: 20px;
+      margin-bottom: 10px;
     }
 
-    .logout-btn {
-      padding: 10px 20px;
+    .card {
+      background: #1e1e1e;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 400px;
+      text-align: left;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 5px;
+      border: none;
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
       border: none;
       border-radius: 5px;
       background: white;
       color: black;
       font-weight: bold;
       cursor: pointer;
-      margin-top: 20px;
     }
 
-    .logout-btn:hover {
+    button:hover {
       background: #ddd;
+    }
+
+    #logout-btn {
+      background: crimson;
+      color: white;
+      margin-top: 30px;
+    }
+
+    #logout-btn:hover {
+      background: darkred;
+    }
+
+    .hidden {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <h1>Willkommen im Admin Panel</h1>
-  <p>Du bist erfolgreich eingeloggt.</p>
-  <button class="logout-btn" id="logout-btn">Logout</button>
+  <h1>Molchos Admin</h1>
+  <p id="welcome-text">Lade Benutzerinformationen...</p>
+
+  <!-- User Info -->
+  <div class="card" id="user-info">
+    <h2>Deine Daten</h2>
+    <p><strong>Email:</strong> <span id="user-email"></span></p>
+    <p><strong>UID:</strong> <span id="user-uid"></span></p>
+  </div>
+
+  <!-- Admin Panel -->
+  <div class="card hidden" id="admin-panel">
+    <h2>Admin Panel</h2>
+    <p>Neuen Benutzer anlegen:</p>
+    <input type="text" id="new-username" placeholder="Benutzername">
+    <input type="password" id="new-password" placeholder="Passwort">
+    <button id="create-user-btn">Benutzer erstellen</button>
+    <p id="admin-message"></p>
+  </div>
+
+  <!-- Logout -->
+  <button id="logout-btn">Logout</button>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { 
+      getAuth, 
+      signOut, 
+      onAuthStateChanged, 
+      createUserWithEmailAndPassword 
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
     // Firebase Config
     const firebaseConfig = {
@@ -62,17 +121,62 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    // Check ob User eingeloggt ist
+    // UI-Elemente
+    const welcomeText = document.getElementById("welcome-text");
+    const userEmail = document.getElementById("user-email");
+    const userUid = document.getElementById("user-uid");
+    const adminPanel = document.getElementById("admin-panel");
+    const createUserBtn = document.getElementById("create-user-btn");
+    const newUsername = document.getElementById("new-username");
+    const newPassword = document.getElementById("new-password");
+    const adminMessage = document.getElementById("admin-message");
+
+    // Check Login Status
     onAuthStateChanged(auth, (user) => {
       if (!user) {
-        window.location.href = "index.html"; // wenn nicht eingeloggt → zurück zum Login
+        window.location.href = "index.html"; 
+        return;
+      }
+
+      // User Infos anzeigen
+      welcomeText.textContent = `Willkommen, ${user.email}`;
+      userEmail.textContent = user.email;
+      userUid.textContent = user.uid;
+
+      // Admin erkennt man am speziellen Account
+      if (user.email === "admin@molchos.local") {
+        adminPanel.classList.remove("hidden");
       }
     });
 
-    // Logout-Button
+    // Logout
     document.getElementById("logout-btn").addEventListener("click", async () => {
       await signOut(auth);
-      window.location.href = "index.html"; // zurück zum Login
+      window.location.href = "index.html";
+    });
+
+    // Neuen User anlegen (nur Admin)
+    createUserBtn.addEventListener("click", async () => {
+      const uname = newUsername.value.trim();
+      const upass = newPassword.value.trim();
+      if (!uname || !upass) {
+        adminMessage.textContent = "⚠ Bitte Username & Passwort eingeben!";
+        adminMessage.style.color = "orange";
+        return;
+      }
+
+      const email = `${uname}@molchos.local`;
+
+      try {
+        await createUserWithEmailAndPassword(auth, email, upass);
+        adminMessage.textContent = `✅ Benutzer ${uname} erstellt.`;
+        adminMessage.style.color = "lightgreen";
+        newUsername.value = "";
+        newPassword.value = "";
+      } catch (err) {
+        adminMessage.textContent = "❌ Fehler: " + err.message;
+        adminMessage.style.color = "red";
+      }
     });
   </script>
 </body>
