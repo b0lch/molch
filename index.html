@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Molch Progress</title>
+  <title>Molch Progress + Login</title>
   <link href="https://fonts.googleapis.com/css2?family=Moo+Lah+Lah&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Rock+3D&display=swap" rel="stylesheet" />
 
@@ -11,10 +11,11 @@
       background-color: #000;
       margin: 0;
       padding: 0;
+      font-family: Arial, sans-serif;
+      color: white;
+      text-align: center;
     }
     h1 {
-      color: #fff;
-      text-align: center;
       font-family: 'Rock 3D', cursive;
       font-size: 100px;
       margin-top: 40px;
@@ -70,6 +71,48 @@
       user-select: none;
       pointer-events: none;
     }
+
+    /* Login form styles */
+    #loginForm {
+      display: none;
+      margin-top: 50px;
+      width: 300px;
+      margin-left: auto;
+      margin-right: auto;
+      background: #111;
+      padding: 20px;
+      border-radius: 15px;
+    }
+    #loginForm input[type="text"],
+    #loginForm input[type="password"] {
+      width: 90%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 10px;
+      border: none;
+      font-size: 16px;
+    }
+    #loginForm button {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      background-color: #00ff00;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+      color: black;
+      transition: background-color 0.3s ease;
+    }
+    #loginForm button:hover {
+      background-color: #00cc00;
+    }
+    #loginMessage {
+      margin-top: 10px;
+      height: 20px;
+      color: red;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -78,7 +121,7 @@
 
   <button id="startButton" aria-label="Start Progress">
     <img
-     src="https://img.icons8.com/?size=100&id=85077&format=png&color=ffffff"
+     src="https://img.icons8.com/ios-filled/100/ffffff/shutdown.png"
       alt="Power Button Icon"
       draggable="false"
     />
@@ -89,10 +132,30 @@
     <span id="progressText">0%</span>
   </div>
 
+  <!-- Login Form -->
+  <div id="loginForm">
+    <h2>Login</h2>
+    <input type="text" id="username" placeholder="Username" autocomplete="username" />
+    <input type="password" id="password" placeholder="Password" autocomplete="current-password" />
+    <button id="loginBtn">Login</button>
+    <div id="loginMessage"></div>
+  </div>
+
   <script>
     const bar = document.getElementById('myBar');
     const progressText = document.getElementById('progressText');
     const startButton = document.getElementById('startButton');
+    const loginForm = document.getElementById('loginForm');
+    const loginBtn = document.getElementById('loginBtn');
+    const loginMessage = document.getElementById('loginMessage');
+
+    // Simple user database (username: password)
+    // To add new users: just add a new key:value pair here
+    const users = {
+      'alice': 'password123',
+      'bob': 'qwerty',
+      'charlie': 'letmein',
+    };
 
     let progressInterval = null;
 
@@ -120,8 +183,10 @@
         if (newWidth >= 100) {
           clearInterval(progressInterval);
           progressInterval = null;
-          alert('Fortschritt abgeschlossen!');
-          startButton.disabled = false;
+          // Instead of alert, show login form
+          startButton.style.display = 'none';
+          document.getElementById('myProgress').style.display = 'none';
+          loginForm.style.display = 'block';
         }
       }, 2000);
     }
@@ -130,6 +195,29 @@
       resetProgress();
       startProgress();
       startButton.disabled = true;
+    });
+
+    loginBtn.addEventListener('click', () => {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!username || !password) {
+        loginMessage.textContent = 'Please enter both username and password.';
+        return;
+      }
+
+      if (users[username] && users[username] === password) {
+        loginMessage.style.color = 'lightgreen';
+        loginMessage.textContent = 'Login successful! Welcome, ' + username + '.';
+        // Here you can redirect to another page or show the main app UI
+        // For demo, just clear form and disable inputs:
+        document.getElementById('username').disabled = true;
+        document.getElementById('password').disabled = true;
+        loginBtn.disabled = true;
+      } else {
+        loginMessage.style.color = 'red';
+        loginMessage.textContent = 'Invalid username or password.';
+      }
     });
 
     resetProgress();
