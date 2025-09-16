@@ -3,14 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <title>Molch Progress</title>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Moo+Lah+Lah&display=swap"
-    rel="stylesheet"
-  />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Rock+3D&display=swap"
-    rel="stylesheet"
-  />
+  <link href="https://fonts.googleapis.com/css2?family=Moo+Lah+Lah&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Rock+3D&display=swap" rel="stylesheet" />
 
   <style>
     body {
@@ -50,29 +44,41 @@
       color: black;
       user-select: none;
     }
-    .BootImage {
+    button#startButton {
+      background: transparent;
+      border: none;
+      cursor: pointer;
       display: block;
       margin: 30px auto;
+      padding: 0;
       width: 100px;
       height: 100px;
-      cursor: pointer;
       transition: transform 0.2s ease;
+      outline-offset: 4px;
     }
-    .BootImage:hover {
+    button#startButton:disabled {
+      cursor: default;
+      opacity: 0.5;
+    }
+    button#startButton:hover:not(:disabled) {
       transform: scale(1.1);
+    }
+    button#startButton img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      user-select: none;
+      pointer-events: none;
     }
   </style>
 </head>
 <body>
+
   <h1>MolchOS</h1>
 
-  <!-- Using a direct stable URL for the third image -->
-  <img
-    src="https://cdn-icons-png.flaticon.com/512/992/992683.png"
-    id="startButton"
-    alt="Start Button"
-    class="BootImage"
-  />
+  <button id="startButton" aria-label="Start Progress">
+    <img src="https://cdn-icons-png.flaticon.com/512/992/992683.png" alt="Power Button Icon" draggable="false" />
+  </button>
 
   <div id="myProgress">
     <div id="myBar"></div>
@@ -110,8 +116,8 @@
         if (newWidth >= 100) {
           clearInterval(progressInterval);
           progressInterval = null;
+          alert('Fortschritt abgeschlossen!');
           startButton.disabled = false;
-          startButton.style.cursor = 'pointer';
         }
       }, 2000);
     }
@@ -120,7 +126,6 @@
       resetProgress();
       startProgress();
       startButton.disabled = true;
-      startButton.style.cursor = 'default';
     });
 
     resetProgress();
