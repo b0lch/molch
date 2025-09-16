@@ -53,13 +53,26 @@
             display: block;
             margin: 20px auto;
         }
+        .BootImage {
+            display: block;
+            margin: 20px auto;
+            width: 100px; /* Adjust as needed */
+            height: auto;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .BootImage:hover {
+            transform: scale(1.05);
+        }
+
     </style>
 </head>
 <body>
 
     <h1>MolchOS</h1>
 
-    <button class="Boot" id="startButton">Starte</button>
+    <img src="https://i.imgur.com/2Dz5fVp.png" id="startButton" alt="Start Button" class="BootImage">
+
 
     <div id="myProgress">
         <div id="myBar">
