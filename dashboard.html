@@ -6,7 +6,7 @@
   <style>
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
+      font-family: "Segoe UI", Arial, sans-serif;
       background: linear-gradient(135deg, #232526, #414345);
       color: white;
       display: flex;
@@ -14,27 +14,149 @@
       align-items: center;
       height: 100vh;
     }
-    .box {
+
+    .dashboard {
       background: rgba(0,0,0,0.7);
       padding: 40px;
       border-radius: 20px;
       text-align: center;
-      box-shadow: 0 0 20px rgba(255,255,255,0.3);
+      box-shadow: 0 0 30px rgba(255,255,255,0.2);
+      max-width: 500px;
+      width: 90%;
     }
+
     h1 {
-      font-size: 36px;
-      margin-bottom: 20px;
+      font-size: 32px;
+      margin-bottom: 10px;
     }
-    p {
-      font-size: 18px;
-      opacity: 0.9;
+
+    #username {
+      font-size: 20px;
+      font-style: italic;
+      margin-bottom: 20px;
+      display: block;
+    }
+
+    .fun-box {
+      margin: 20px 0;
+      padding: 20px;
+      border-radius: 15px;
+      background: rgba(255,255,255,0.1);
+      transition: background 0.3s;
+    }
+
+    .fun-btn {
+      background: white;
+      color: black;
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      margin: 5px;
+    }
+    .fun-btn:hover {
+      background: #ddd;
+    }
+
+    #logout {
+      margin-top: 25px;
+      background: crimson;
+      color: white;
+    }
+    #logout:hover {
+      background: darkred;
     }
   </style>
 </head>
 <body>
-  <div class="box">
-    <h1>Willkommen bei Molchos 🚀</h1>
-    <p>Du bist jetzt erfolgreich eingeloggt.</p>
+  <div class="dashboard">
+    <h1>🚀 Willkommen bei Molchos</h1>
+    <span id="username"></span>
+
+    <div class="fun-box">
+      <h3>Zufälliger Spruch</h3>
+      <p id="quote">Klicke unten für Spaß 😄</p>
+      <button class="fun-btn" onclick="randomQuote()">Neuer Spruch</button>
+    </div>
+
+    <div class="fun-box">
+      <h3>Farbwechsler 🎨</h3>
+      <button class="fun-btn" onclick="changeColor()">Farbe ändern</button>
+    </div>
+
+    <div class="fun-box">
+      <h3>Uhrzeit ⏰</h3>
+      <p id="clock"></p>
+    </div>
+
+    <button id="logout" class="fun-btn" onclick="logout()">Logout</button>
   </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } 
+      from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAJn62nD-a9f9ryy_8Xi0OJhojZ7_6RyOc",
+      authDomain: "molchos-8432f.firebaseapp.com",
+      databaseURL: "https://molchos-8432f-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "molchos-8432f",
+      storageBucket: "molchos-8432f.firebasestorage.app",
+      messagingSenderId: "863467159822",
+      appId: "1:863467159822:web:f352836ffa1289f03f575f"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const usernameSpan = document.getElementById("username");
+
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        let name = user.email.split("@")[0];
+        usernameSpan.textContent = `Eingeloggt als: ${name}`;
+      } else {
+        window.location.href = "index.html";
+      }
+    });
+
+    function logout() {
+      signOut(auth).then(() => {
+        window.location.href = "index.html";
+      });
+    }
+
+    window.logout = logout;
+
+    // Fun stuff
+    const quotes = [
+      "Molch dich nicht voll 🦎",
+      "Heute schon gegessen? 🍕",
+      "Klick nicht zu viel, sonst geht's kaputt 😂",
+      "404 Spaß nicht gefunden...",
+      "Mehr Mölch für alle!"
+    ];
+    function randomQuote() {
+      const q = quotes[Math.floor(Math.random() * quotes.length)];
+      document.getElementById("quote").textContent = q;
+    }
+    window.randomQuote = randomQuote;
+
+    function changeColor() {
+      const colors = ["#e74c3c","#3498db","#2ecc71","#f1c40f","#9b59b6"];
+      document.querySelector(".dashboard").style.background = colors[Math.floor(Math.random()*colors.length)];
+    }
+    window.changeColor = changeColor;
+
+    // Clock
+    function updateClock() {
+      const now = new Date();
+      document.getElementById("clock").textContent = now.toLocaleTimeString();
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+  </script>
 </body>
 </html>
