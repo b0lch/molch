@@ -2,187 +2,174 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MolchOS</title>
   <style>
     body {
       margin: 0;
-      padding: 0;
       font-family: Arial, sans-serif;
-      background-color: black;
+      background-color: #000;
       color: white;
       text-align: center;
     }
 
     h1 {
-      margin-top: 30px;
-      font-size: 2.5rem;
+      margin-top: 40px;
     }
 
-    .power-icon {
-      font-size: 60px;
-      margin: 20px 0;
+    .power-button {
+      font-size: 80px;
+      cursor: pointer;
+      margin: 20px auto;
+      display: inline-block;
     }
 
-    #loadingBarContainer {
-      width: 200px;
-      height: 12px;
-      background-color: rgba(255, 255, 255, 0.2);
-      border-radius: 6px;
+    .progress-container {
+      width: 300px;
+      height: 15px;
+      background: #333;
+      border-radius: 10px;
       margin: 20px auto;
       overflow: hidden;
+      display: none;
     }
 
-    #loadingBar {
+    .progress-bar {
       height: 100%;
-      width: 0%;
-      background-color: white;
-      border-radius: 6px;
-      transition: width 0.3s ease-out;
+      width: 0;
+      background: white;
+      transition: width 0.2s;
     }
 
-    #loginBox {
+    .login-box {
       display: none;
-      margin: 40px auto;
+      background: #1e1e1e;
       padding: 20px;
-      width: 280px;
-      background-color: #1e1e1e;
       border-radius: 10px;
-      box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
-    }
-
-    #loginBox input {
-      display: block;
-      width: 100%;
-      margin: 10px 0;
-      padding: 10px;
-      border: none;
-      border-radius: 5px;
-      outline: none;
-    }
-
-    #loginBox button {
-      margin-top: 10px;
-      padding: 10px;
-      width: 100%;
-      border: none;
-      border-radius: 5px;
-      background-color: #673ab7;
-      color: white;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    #loginBox button:hover {
-      background-color: #5e35b1;
-    }
-
-    #debugMenu {
-      display: none;
-      background: #111;
-      color: lime;
-      padding: 10px;
-      border: 1px solid lime;
-      font-family: monospace;
-      font-size: 14px;
-      position: fixed;
-      bottom: 10px;
-      right: 10px;
-      max-height: 200px;
       width: 300px;
-      overflow-y: auto;
+      margin: 30px auto;
+      box-shadow: 0 0 10px rgba(255,255,255,0.2);
+    }
+
+    input {
+      display: block;
+      width: 90%;
+      padding: 10px;
+      margin: 10px auto;
+      border: none;
+      border-radius: 5px;
+    }
+
+    button {
+      background: #5a3bff;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #462ecc;
+    }
+
+    #debug {
+      display: none;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid white;
+      padding: 15px;
+      width: 300px;
+      margin: 20px auto;
+      text-align: left;
+      font-size: 14px;
     }
   </style>
 </head>
-<body onload="startLoadingBar()">
-
+<body>
   <h1>MolchOS</h1>
-  <div class="power-icon">⏻</div>
+
+  <!-- Power Button -->
+  <div class="power-button" onclick="startLoading()">⏻</div>
 
   <!-- Ladebalken -->
-  <div id="loadingBarContainer">
-    <div id="loadingBar"></div>
+  <div class="progress-container">
+    <div class="progress-bar" id="progressBar"></div>
   </div>
 
-  <!-- Login -->
-  <div id="loginBox">
-    <input type="text" id="email" placeholder="E-Mail">
+  <!-- Login Box -->
+  <div class="login-box" id="loginBox">
+    <input type="email" id="email" placeholder="E-Mail eingeben">
     <input type="password" id="password" placeholder="Passwort">
     <button onclick="login()">Login</button>
   </div>
 
-  <!-- Debug-Menü -->
-  <div id="debugMenu"></div>
+  <!-- Debug Menü -->
+  <div id="debug">
+    <h3>Debug-Menü</h3>
+    <p>Statusmeldungen erscheinen hier...</p>
+  </div>
 
-  <!-- Firebase -->
+  <!-- Firebase + Script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 
-    // TODO: Dein Firebase Config hier einfügen
+    // Firebase Config
     const firebaseConfig = {
-      apiKey: "DEIN_API_KEY",
+      apiKey: "AIzaSyAJn62nD-a9f9ryy_8Xi0OJhojZ7_6RyOc",
       authDomain: "molchos-8432f.firebaseapp.com",
+      databaseURL: "https://molchos-8432f-default-rtdb.europe-west1.firebasedatabase.app",
       projectId: "molchos-8432f",
       storageBucket: "molchos-8432f.appspot.com",
-      messagingSenderId: "DEINE_ID",
-      appId: "DEINE_APP_ID"
+      messagingSenderId: "863467159822",
+      appId: "1:863467159822:web:f352836ffa1289f03f575f"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    // Ladebalken Animation
-    window.startLoadingBar = function(){
-      const bar = document.getElementById('loadingBar');
-      let progress = 0;
+    // Ladebalken Logik
+    let progress = 0;
+    let interval;
 
-      const interval = setInterval(() => {
-        progress += Math.random() * 20;
-        if(progress >= 100){
-          progress = 100;
+    window.startLoading = function () {
+      document.querySelector(".progress-container").style.display = "block";
+      const bar = document.getElementById("progressBar");
+
+      interval = setInterval(() => {
+        // Fortschritt random erhöhen
+        progress += Math.floor(Math.random() * 10) + 5;
+        if (progress > 100) progress = 100;
+
+        bar.style.width = progress + "%";
+
+        if (progress >= 100) {
           clearInterval(interval);
-          document.getElementById('loginBox').style.display = 'block';
+          document.getElementById("loginBox").style.display = "block";
         }
-        bar.style.width = progress + '%';
       }, 500);
     };
 
-    // Debug
-    function dbg(...args){
-      const dbgEl = document.getElementById('debugMenu');
-      if(dbgEl){
-        const msg = args.map(a => (typeof a === 'object' ? JSON.stringify(a) : a)).join(' ');
-        const line = document.createElement('div');
-        line.textContent = msg;
-        dbgEl.appendChild(line);
-        dbgEl.scrollTop = dbgEl.scrollHeight;
-      }
-    }
-
-    document.addEventListener('keydown', (e) => {
-      if(e.key.toLowerCase() === 'd'){
-        const dbgEl = document.getElementById('debugMenu');
-        dbgEl.style.display = dbgEl.style.display === 'none' ? 'block' : 'none';
-      }
-    });
-
-    // Login mit Firebase
-    window.login = function(){
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value.trim();
+    // Login Funktion
+    window.login = function () {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
 
       signInWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
+        .then(userCredential => {
           alert("Login erfolgreich: " + userCredential.user.email);
-          dbg("Login success:", userCredential.user);
         })
-        .catch((error) => {
-          alert("Login fehlgeschlagen: " + error.message);
-          dbg("Login error:", error.code, error.message);
+        .catch(error => {
+          alert("Fehler: " + error.message);
         });
     };
-  </script>
 
+    // Debug-Menü mit Taste D
+    document.addEventListener("keydown", (e) => {
+      if (e.key.toLowerCase() === "d") {
+        const dbg = document.getElementById("debug");
+        dbg.style.display = dbg.style.display === "none" ? "block" : "none";
+      }
+    });
+  </script>
 </body>
 </html>
