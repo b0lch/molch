@@ -78,7 +78,6 @@
       pointer-events: none;
     }
 
-    /* Login form styles */
     #loginForm {
       display: none;
       margin-top: 50px;
@@ -166,18 +165,12 @@
     <div id="loginMessage"></div>
   </div>
 
+  <!-- Firebase -->
   <script type="module">
-    // Firebase (CDN modules)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import {
-      getAuth,
-      signInWithEmailAndPassword,
-      signInAnonymously,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getIdTokenResult } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-    // Your web app's Firebase configuration (use the config you gave me)
+    // Your Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyAJn62nD-a9f9ryy_8Xi0OJhojZ7_6RyOc",
       authDomain: "molchos-8432f.firebaseapp.com",
@@ -188,11 +181,9 @@
       appId: "1:863467159822:web:f352836ffa1289f03f575f"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    // UI elements
     const bar = document.getElementById('myBar');
     const progressText = document.getElementById('progressText');
     const startButton = document.getElementById('startButton');
@@ -249,101 +240,47 @@
       loginMessage.className = fancy ? 'fancy-text' : '';
     }
 
-    function disableInputs() {
-      usernameInput.disabled = true;
-      passwordInput.disabled = true;
-      loginBtn.disabled = true;
-      guestLoginBtn.disabled = true;
-    }
-
-    // Helper: convert the "username" user input to an email to use with Firebase.
-    // This preserves your original UX: users can still type "alice" or "admin".
-    // Convention: we append a local domain to form an email (you must create these emails in Firebase Auth).
-    function usernameToEmail(username) {
-      // if user typed an email already, use it
-      if (username.includes('@')) return username;
-      // normalize to lowercase
-      return username.toLowerCase() + "@molchos.local";
-    }
-
-    // Attempt login with Firebase
     async function tryLogin() {
-      const rawUsername = usernameInput.value.trim();
+      const username = usernameInput.value.trim();
       const password = passwordInput.value;
 
-      if (!rawUsername || !password) {
+      if (!username || !password) {
         showMessage('Please enter both username and password.', 'red');
         return;
       }
 
-      const email = usernameToEmail(rawUsername);
+      const email = `${username}@molchos.local`;
 
       try {
-        const cred = await signInWithEmailAndPassword(auth, email, password);
-        // onAuthStateChanged handler below will handle successful UI updates
-      } catch (err) {
-        showMessage('Invalid username or password.', 'red');
-      }
-    }
-
-    // Anonymous guest login (keeps original "Guest" behaviour)
-    async function tryGuestLogin() {
-      try {
-        await signInAnonymously(auth);
-        showMessage('Login successful! Welcome, Guest.');
-        disableInputs();
-      } catch (error) {
-        showMessage('Guest login failed: ' + error.message, 'red');
-      }
-    }
-
-    // Listen for auth state and display appropriate message (including admin greeting).
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) return; // not signed in
-
-      // Default non-admin welcome
-      let isAdmin = false;
-      let displayNameOrEmail = user.email || 'Guest';
-
-      // If anonymous, show Guest
-      if (user.isAnonymous) {
-        showMessage('Login successful! Welcome, Guest.');
-        disableInputs();
-        return;
-      }
-
-      // Check custom claims for admin (most reliable) — requires Admin SDK to set claims.
-      try {
-        const idResult = await getIdTokenResult(user);
-        if (idResult && idResult.claims && idResult.claims.admin === true) {
-          isAdmin = true;
+        await signInWithEmailAndPassword(auth, email, password);
+        if (username === 'admin') {
+          showMessage('Willkommen Bo.', 'lightgreen', true);
+        } else {
+          showMessage(`Login successful! Welcome, ${username}.`);
         }
-      } catch (e) {
-        // ignore token inspection failures
+        usernameInput.disabled = true;
+        passwordInput.disabled = true;
+        loginBtn.disabled = true;
+        guestLoginBtn.disabled = true;
+      } catch (error) {
+        if (error.code === 'auth/user-not-found') {
+          try {
+            await createUserWithEmailAndPassword(auth, email, password);
+            showMessage(`New account created! Welcome, ${username}.`);
+            usernameInput.disabled = true;
+            passwordInput.disabled = true;
+            loginBtn.disabled = true;
+            guestLoginBtn.disabled = true;
+          } catch (err) {
+            showMessage('Error creating account: ' + err.message, 'red');
+          }
+        } else {
+          showMessage('Login failed: ' + error.message, 'red');
+        }
       }
-
-      // Also support the old behavior: if user typed "admin" and that maps to an email you created
-      // or if the account's email local-part is 'admin', treat as admin fallback:
-      try {
-        const localPart = (user.email || '').split('@')[0];
-        if (localPart === 'admin') isAdmin = true;
-      } catch (e) {}
-
-      // Show admin greeting if admin, preserving original "Willkommen Bo."
-      if (isAdmin) {
-        showMessage('Willkommen Bo.', 'lightgreen', true);
-      } else {
-        // try to display a readable name: use email local part or full email
-        const local = (user.email || '').split('@')[0];
-        const name = local || (user.displayName || 'User');
-        showMessage(`Login successful! Welcome, ${name}.`);
-      }
-
-      disableInputs();
-    });
+    }
 
     loginBtn.addEventListener('click', tryLogin);
-    guestLoginBtn.addEventListener('click', tryGuestLogin);
 
     [usernameInput, passwordInput].forEach(input => {
       input.addEventListener('keydown', (event) => {
@@ -352,6 +289,10 @@
           tryLogin();
         }
       });
+    });
+
+    guestLoginBtn.addEventListener('click', () => {
+      showMessage('Guest accounts are disabled. Please choose a username.', 'red');
     });
 
     resetProgress();
