@@ -2,122 +2,101 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Molchos Login</title>
   <style>
     body {
-      margin: 0;
-      font-family: Arial, sans-serif;
       background-color: #111;
       color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    h1 {
-      margin-bottom: 20px;
-    }
-
-    .card {
-      background: #1e1e1e;
-      padding: 20px;
-      border-radius: 10px;
-      width: 100%;
-      max-width: 350px;
+      font-family: Arial, sans-serif;
       text-align: center;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      margin: 0;
+      padding: 0;
     }
-
-    input {
-      width: 100%;
-      padding: 10px;
-      margin: 8px 0;
-      border-radius: 5px;
+    #powerButton {
+      font-size: 40px;
+      background: none;
       border: none;
-      font-size: 14px;
-    }
-
-    button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      border: none;
-      border-radius: 5px;
-      background: white;
-      color: black;
-      font-weight: bold;
+      color: white;
       cursor: pointer;
+      margin-top: 100px;
     }
-
-    button:hover {
-      background: #ddd;
-    }
-
-    /* Ladebalken */
-    #loader-container {
-      width: 100%;
-      max-width: 350px;
-      height: 20px;
-      background: #333;
-      border-radius: 10px;
-      margin: 20px auto;
-      overflow: hidden;
+    #progressContainer {
       display: none;
+      width: 80%;
+      margin: 40px auto;
+      height: 25px;
+      background: #333;
+      border-radius: 15px;
+      overflow: hidden;
     }
-
-    #loader-bar {
-      width: 0;
+    #progressBar {
+      width: 0%;
       height: 100%;
       background: white;
-      border-radius: 10px;
-      transition: width 0.3s ease-out;
+      transition: width 0.3s ease;
     }
-
-    /* Debug Menü */
-    #debug {
+    #loginBox {
       display: none;
-      background: black;
-      color: lime;
+      margin-top: 40px;
+      padding: 20px;
+      background: #222;
+      border-radius: 12px;
+      width: 300px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    #loginBox input {
+      width: 90%;
+      margin: 10px 0;
       padding: 10px;
-      margin-top: 20px;
-      width: 100%;
-      max-width: 400px;
-      font-size: 12px;
-      text-align: left;
-      white-space: pre-wrap;
       border-radius: 8px;
+      border: none;
+    }
+    #loginBox button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      background: white;
+      color: black;
+      cursor: pointer;
+    }
+    #debugMenu {
+      display: none;
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      background: #444;
+      padding: 15px;
+      border-radius: 10px;
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
-  <h1>Molchos Login</h1>
 
-  <div class="card">
-    <input type="text" id="username" placeholder="Benutzername">
-    <input type="password" id="password" placeholder="Passwort">
-    <button id="login-btn">Anmelden</button>
+  <button id="powerButton">⏻</button>
 
-    <div id="loader-container">
-      <div id="loader-bar"></div>
-    </div>
+  <div id="progressContainer">
+    <div id="progressBar"></div>
   </div>
 
-  <div id="debug"></div>
+  <div id="loginBox">
+    <h2>Login</h2>
+    <input type="text" id="username" placeholder="Benutzername"><br>
+    <input type="password" id="password" placeholder="Passwort"><br>
+    <button id="loginBtn">Login</button>
+  </div>
 
+  <div id="debugMenu">
+    <p><b>Debug-Menü</b></p>
+    <p>Status: <span id="debugStatus">Gestoppt</span></p>
+  </div>
+
+  <!-- Firebase -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { 
-      getAuth, 
-      signInWithEmailAndPassword, 
-      createUserWithEmailAndPassword, 
-      onAuthStateChanged 
-    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
 
-    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyAJn62nD-a9f9ryy_8Xi0OJhojZ7_6RyOc",
       authDomain: "molchos-8432f.firebaseapp.com",
@@ -128,85 +107,81 @@
       appId: "1:863467159822:web:f352836ffa1289f03f575f"
     };
 
-    // Init Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    // UI-Elemente
-    const loginBtn = document.getElementById("login-btn");
-    const loaderContainer = document.getElementById("loader-container");
-    const loaderBar = document.getElementById("loader-bar");
-    const debugBox = document.getElementById("debug");
+    const powerButton = document.getElementById("powerButton");
+    const progressContainer = document.getElementById("progressContainer");
+    const progressBar = document.getElementById("progressBar");
+    const loginBox = document.getElementById("loginBox");
+    const loginBtn = document.getElementById("loginBtn");
+    const debugMenu = document.getElementById("debugMenu");
+    const debugStatus = document.getElementById("debugStatus");
 
-    function logDebug(msg) {
-      debugBox.textContent += msg + "\n";
-    }
+    let progress = 0;
+    let interval;
 
-    // Ladebalken Simulation
-    function startLoader(callback) {
-      loaderContainer.style.display = "block";
-      loaderBar.style.width = "0%";
-      let progress = 0;
+    // Power button startet Ladebalken
+    powerButton.addEventListener("click", () => {
+      powerButton.style.display = "none";
+      progressContainer.style.display = "block";
 
-      const interval = setInterval(() => {
-        progress += Math.floor(Math.random() * 20) + 5; // zufällig
+      interval = setInterval(() => {
+        progress += Math.floor(Math.random() * 15); // random Sprünge
+        if (progress > 100) progress = 100;
+        progressBar.style.width = progress + "%";
+
         if (progress >= 100) {
-          progress = 100;
           clearInterval(interval);
-          setTimeout(callback, 500);
+          setTimeout(() => {
+            progressContainer.style.display = "none";
+            loginBox.style.display = "block";
+          }, 500);
         }
-        loaderBar.style.width = progress + "%";
-      }, 500);
-    }
+      }, 400);
+    });
 
-    // Login + Auto-Account-Erstellung
+    // Login Handler
     loginBtn.addEventListener("click", async () => {
-      const uname = document.getElementById("username").value.trim();
-      const upass = document.getElementById("password").value.trim();
+      const uname = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
 
-      if (!uname || !upass) {
-        alert("Bitte Benutzername und Passwort eingeben!");
+      if (!uname || !password) {
+        alert("Bitte alle Felder ausfüllen.");
         return;
       }
 
-      const email = `${uname}@molchos.local`;
-      logDebug(`🔑 Versuche Login für ${email}`);
+      const email = `${uname}@molchos.app`; // gültige Domain!
 
-      startLoader(async () => {
-        try {
-          await signInWithEmailAndPassword(auth, email, upass);
-          logDebug("✅ Login erfolgreich!");
-        } catch (err) {
-          if (err.code === "auth/user-not-found") {
-            logDebug("⚠ Benutzer nicht gefunden – erstelle neuen Account...");
-            try {
-              await createUserWithEmailAndPassword(auth, email, upass);
-              logDebug("✅ Neuer Benutzer erstellt und eingeloggt.");
-            } catch (createErr) {
-              logDebug("❌ Fehler bei Account-Erstellung: " + createErr.message);
-            }
-          } else {
-            logDebug("❌ Login Fehler: " + err.message);
-          }
-        }
-      });
-    });
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        alert("Login erfolgreich: " + userCredential.user.email);
 
-    // Redirect nach Login
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        if (user.email === "admin@molchos.local") {
+        if (uname.toLowerCase() === "admin") {
           window.location.href = "admin.html";
         } else {
-          window.location.href = "user.html";
+          alert("Willkommen, " + uname);
+        }
+
+      } catch (error) {
+        if (error.code === "auth/user-not-found") {
+          try {
+            const newUser = await createUserWithEmailAndPassword(auth, email, password);
+            alert("Neuer Account erstellt: " + newUser.user.email);
+          } catch (regErr) {
+            alert("Registrierungsfehler: " + regErr.message);
+          }
+        } else {
+          alert("Login fehlgeschlagen: " + error.message);
         }
       }
     });
 
-    // Debug-Menü mit Taste D
+    // Debug-Menü mit Taste d
     document.addEventListener("keydown", (e) => {
-      if (e.key === "d") {
-        debugBox.style.display = debugBox.style.display === "none" ? "block" : "none";
+      if (e.key === "d" || e.key === "D") {
+        debugMenu.style.display = debugMenu.style.display === "none" ? "block" : "none";
+        debugStatus.textContent = "Aktiv";
       }
     });
   </script>
