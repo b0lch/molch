@@ -1,200 +1,174 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>MolchOS — Login (Debug)</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MolchOS</title>
   <style>
-    body{background:#000;color:#fff;font-family:Arial;text-align:center;padding:30px}
-    h1{font-size:36px;margin-bottom:10px}
-    #power{font-size:80px;cursor:pointer;margin:20px auto}
-    #progressWrap{width:320px;height:28px;background:#333;border-radius:20px;margin:10px auto;position:relative;overflow:hidden;display:none}
-    #progressBar{height:100%;width:0;background:linear-gradient(90deg,#00ff88,#00b7ff,#9d00ff);box-shadow:0 0 12px rgba(0,200,255,0.12);transition:width .25s linear}
-    #progressText{color:#000;position:absolute;width:100%;text-align:center;top:3px;font-weight:700}
-    #loginCard{width:360px;margin:18px auto;background:#111;padding:20px;border-radius:12px;display:none;box-shadow:0 8px 30px rgba(0,0,0,0.6)}
-    input{width:100%;padding:10px;margin:8px 0;border-radius:6px;border:none;box-sizing:border-box}
-    button{background:#6a5acd;color:#fff;border:none;padding:10px 14px;border-radius:8px;cursor:pointer}
-    #msg{height:20px;margin-top:8px;font-weight:700}
-    #debugBox{display:none;background:#060606;color:#7fff7f;padding:10px;margin:16px auto;border-radius:6px;width:90%;max-width:800px;text-align:left;white-space:pre-wrap;font-family:monospace;font-size:12px;max-height:240px;overflow:auto}
-    label{display:block;text-align:left;color:#ccc;font-size:13px;margin-bottom:4px}
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: black;
+      color: white;
+      text-align: center;
+    }
+
+    h1 {
+      margin-top: 30px;
+      font-size: 2.5rem;
+    }
+
+    /* Power-Icon */
+    .power-icon {
+      font-size: 60px;
+      margin: 20px 0;
+    }
+
+    /* Ladebalken */
+    #loadingBarContainer {
+      width: 200px;
+      height: 12px;
+      background-color: rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      margin: 20px auto;
+      overflow: hidden;
+    }
+
+    #loadingBar {
+      height: 100%;
+      width: 0%;
+      background-color: white;
+      border-radius: 6px;
+      transition: width 0.3s ease-out;
+    }
+
+    /* Login-Box */
+    #loginBox {
+      display: none;
+      margin: 40px auto;
+      padding: 20px;
+      width: 280px;
+      background-color: #1e1e1e;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+    }
+
+    #loginBox input {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      outline: none;
+    }
+
+    #loginBox button {
+      margin-top: 10px;
+      padding: 10px;
+      width: 100%;
+      border: none;
+      border-radius: 5px;
+      background-color: #673ab7;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    #loginBox button:hover {
+      background-color: #5e35b1;
+    }
+
+    /* Debug-Menü */
+    #debugMenu {
+      display: none;
+      background: #111;
+      color: lime;
+      padding: 10px;
+      border: 1px solid lime;
+      font-family: monospace;
+      font-size: 14px;
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      max-height: 200px;
+      width: 300px;
+      overflow-y: auto;
+    }
   </style>
 </head>
-<body>
+<body onload="startLoadingBar()">
+
   <h1>MolchOS</h1>
+  <div class="power-icon">⏻</div>
 
-  <div id="power" title="Start">⏻</div>
-
-  <div id="progressWrap">
-    <div id="progressBar"></div>
-    <div id="progressText">0%</div>
+  <!-- Ladebalken -->
+  <div id="loadingBarContainer">
+    <div id="loadingBar"></div>
   </div>
 
-  <div id="loginCard">
-    <label for="email">E-Mail</label>
-    <input id="email" type="email" placeholder="E-Mail eingeben" autocomplete="username">
-    <label for="password">Passwort</label>
-    <input id="password" type="password" placeholder="Passwort" autocomplete="current-password">
-    <button id="loginBtn">Login</button>
-    <div id="msg"></div>
+  <!-- Login -->
+  <div id="loginBox">
+    <input type="text" id="email" placeholder="Benutzername">
+    <input type="password" id="password" placeholder="Passwort">
+    <button onclick="login()">Login</button>
   </div>
 
-  <pre id="debugBox"></pre>
+  <!-- Debug-Menü -->
+  <div id="debugMenu"></div>
 
-  <script type="module">
-    import { auth } from './src/firebase.js';
-    import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js';
-
-    // UI
-    const power = document.getElementById('power');
-    const progressWrap = document.getElementById('progressWrap');
-    const progressBar = document.getElementById('progressBar');
-    const progressText = document.getElementById('progressText');
-    const loginCard = document.getElementById('loginCard');
-    const emailInput = document.getElementById('email');
-    const passInput = document.getElementById('password');
-    const loginBtn = document.getElementById('loginBtn');
-    const msg = document.getElementById('msg');
-    const debugBox = document.getElementById('debugBox');
-
-    let debugMode = true; // true = Debugausgabe im UI
-    function dbg(...args){
-      if(!debugMode) return;
-      const t = new Date().toLocaleTimeString();
-      debugBox.style.display = 'block';
-      debugBox.textContent += `[${t}] ${args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ')}\n`;
-      debugBox.scrollTop = debugBox.scrollHeight;
-      console.log(...args);
-    }
-
-    // Random/ruckeliger Ladebalken (ähnlich deiner ersten Version)
-    async function startProgress() {
-      progressBar.style.width = '0%';
-      progressText.textContent = '0%';
-      progressWrap.style.display = 'block';
-      loginCard.style.display = 'none';
+  <script>
+    // Ladebalken Animation
+    function startLoadingBar(){
+      const bar = document.getElementById('loadingBar');
       let progress = 0;
-      dbg('startProgress: start');
-      while(progress < 100){
-        // zufällige Schritte, kleine Pause: ergibt ruckeligen Effekt
-        const step = Math.floor(Math.random()*8) + 1; // 1..8
-        progress = Math.min(100, progress + step);
-        progressBar.style.width = progress + '%';
-        progressText.textContent = Math.round(progress) + '%';
-        dbg('progress', progress, 'step', step);
-        // Wartezeit variabel (200..1200ms) für unvorhersehbaren Effekt
-        const wait = 200 + Math.floor(Math.random()*900);
-        await new Promise(r => setTimeout(r, wait));
+
+      const interval = setInterval(() => {
+        progress += Math.random() * 20; // zufällige Schritte
+        if(progress >= 100){
+          progress = 100;
+          clearInterval(interval);
+          // Login-Felder anzeigen
+          document.getElementById('loginBox').style.display = 'block';
+        }
+        bar.style.width = progress + '%';
+      }, 500);
+    }
+
+    // Debug-Ausgabe
+    function dbg(...args){
+      const dbgEl = document.getElementById('debugMenu');
+      if(dbgEl){
+        const msg = args.map(a => (typeof a === 'object' ? JSON.stringify(a) : a)).join(' ');
+        const line = document.createElement('div');
+        line.textContent = msg;
+        dbgEl.appendChild(line);
+        dbgEl.scrollTop = dbgEl.scrollHeight;
       }
-      dbg('startProgress: fertig');
-      // Balken ausblenden & Login zeigen
-      setTimeout(()=>{ progressWrap.style.display='none'; loginCard.style.display='block'; emailInput.focus(); }, 300);
     }
 
-    // Power click handler: startet Progress (und sperrt Knopf bis Ende)
-    let running=false;
-    power.addEventListener('click', ()=>{
-      if(running) return;
-      running = true;
-      power.style.opacity = '0.6';
-      startProgress().finally(()=> { running=false; power.style.opacity='1'; });
-    });
-
-    // Login click
-    async function showMessage(text, color='lightgreen'){
-      msg.textContent = text;
-      msg.style.color = color;
-      dbg('UI msg:', text);
-    }
-
-    loginBtn.addEventListener('click', async ()=>{
-      const email = emailInput.value.trim();
-      const password = passInput.value;
-      if(!email || !password){ showMessage('Bitte E-Mail und Passwort eingeben', 'orange'); return; }
-      showMessage('Logging in…', 'lightblue');
-      dbg('attempt login', {email});
-      try {
-        const userCred = await signInWithEmailAndPassword(auth, email, password);
-        dbg('signedIn', userCred.user);
-        showMessage('Erfolgreich eingeloggt!', 'lightgreen');
-        // Weiterleitung je nach User:
-        if(userCred.user.email === 'admin@molchos.local') {
-          window.location.href = 'admin.html';
-        } else {
-          // z.B. weiter zu user-seite
-          alert('Eingeloggt als ' + userCred.user.email);
-        }
-      } catch (err) {
-        dbg('login error', err.code, err.message);
-        // Falls Benutzer nicht existiert, biete an automatisch zu registrieren
-        if(err.code === 'auth/user-not-found'){
-          // optional: automatisch anlegen — wenn du das willst, entferne confirm
-          const create = confirm('Benutzer existiert nicht. Konto erstellen?');
-          if(create){
-            try{
-              const newUser = await createUserWithEmailAndPassword(auth, email, password);
-              dbg('created', newUser.user);
-              showMessage('Account erstellt und eingeloggt!', 'lightgreen');
-            }catch(cErr){
-              dbg('create error', cErr.code, cErr.message);
-              showMessage('Fehler beim Erstellen: ' + cErr.message, 'red');
-            }
-          } else {
-            showMessage('Bitte registrieren Sie sich zuerst.', 'orange');
-          }
-        } else if(err.code === 'auth/wrong-password'){
-          showMessage('Falsches Passwort', 'red');
-        } else if(err.code === 'auth/inloginBtn.addEventListener('click', async ()=>{
-  let email = emailInput.value.trim();
-  const password = passInput.value;
-
-  if(!email || !password){
-    showMessage('Bitte E-Mail und Passwort eingeben', 'orange'); 
-    return;
-  }
-
-  // Kurzform "admin" akzeptieren → wird zu admin@molchos.local
-  if(email.toLowerCase() === "admin"){
-    email = "admin@molchos.local";
-  }
-
-  showMessage('Logging in…', 'lightblue');
-  dbg('attempt login', {email});
-
-  try {
-    const userCred = await signInWithEmailAndPassword(auth, email, password);
-    dbg('signedIn', userCred.user);
-    showMessage('Erfolgreich eingeloggt!', 'lightgreen');
-
-    // Weiterleitung wenn Admin
-    if(userCred.user.email === 'admin@molchos.local') {
-      window.location.href = 'admin.html';
-    } else {
-      alert('Eingeloggt als ' + userCred.user.email);
-    }
-  } catch (err) {
-    dbg('login error', err.code, err.message);
-    // Fehler-Handling bleibt gleich …
-    if(err.code === 'auth/user-not-found'){
-      showMessage('Benutzer existiert nicht', 'red');
-    } else if(err.code === 'auth/wrong-password'){
-      showMessage('Falsches Passwort', 'red');
-    } else {
-      showMessage('Login fehlgeschlagen: ' + err.message, 'red');
-    }
-  }
-});
-valid-email'){
-          showMessage('Ungültige E-Mail Adresse', 'red');
-        } else {
-          showMessage('Login fehlgeschlagen: ' + err.message, 'red');
-        }
+    // Debug-Menü per Taste "d" umschalten
+    document.addEventListener('keydown', (e) => {
+      if(e.key.toLowerCase() === 'd'){
+        const dbgEl = document.getElementById('debugMenu');
+        dbgEl.style.display = dbgEl.style.display === 'none' ? 'block' : 'none';
       }
     });
 
-    // Taste Enter zum Einloggen
-    [emailInput, passInput].forEach(i => i.addEventListener('keydown', (e)=>{ if(e.key==='Enter') loginBtn.click(); }));
+    // Login-Logik
+    function login(){
+      const user = document.getElementById('email').value.trim();
+      const pass = document.getElementById('password').value.trim();
 
-    dbg('UI ready');
+      if(user === "admin" && pass === "admin"){
+        alert("Login erfolgreich! Willkommen bei MolchOS 🚀");
+      } else {
+        alert("Falscher Benutzername oder Passwort!");
+        dbg("Login fehlgeschlagen:", user, pass);
+      }
+    }
   </script>
+
 </body>
 </html>
