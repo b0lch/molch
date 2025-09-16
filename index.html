@@ -5,7 +5,138 @@
   <title>MolchOS</title>
   <link href="https://fonts.googleapis.com/css2?family=Moo+Lah+Lah&family=Rock+3D&display=swap" rel="stylesheet" />
   <style>
-    /* (your CSS unchanged, skipping for brevity) */
+    body {
+      background-color: #000;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      color: white;
+      text-align: center;
+    }
+
+    h1 {
+      font-family: 'Rock 3D', cursive;
+      font-size: 100px;
+      margin-top: 40px;
+    }
+
+    #myProgress {
+      width: 25%;
+      background-color: grey;
+      margin: 30px auto 0;
+      border-radius: 25px;
+      height: 30px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #myBar {
+      height: 30px;
+      background-color: #fff;
+      border-radius: 25px;
+      width: 0%;
+      transition: width 0.5s ease;
+    }
+
+    #progressText {
+      position: absolute;
+      width: 100%;
+      text-align: center;
+      line-height: 30px;
+      font-weight: bold;
+      color: black;
+      user-select: none;
+    }
+
+    button#startButton {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      display: block;
+      margin: 30px auto;
+      padding: 0;
+      width: 100px;
+      height: 100px;
+      transition: transform 0.2s ease;
+      outline-offset: 4px;
+    }
+
+    button#startButton:disabled {
+      cursor: default;
+      opacity: 1;
+    }
+
+    button#startButton:hover:not(:disabled) {
+      transform: scale(1.1);
+    }
+
+    button#startButton img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    /* Login form styles */
+    #loginForm {
+      display: none;
+      margin-top: 50px;
+      width: 300px;
+      margin-left: auto;
+      margin-right: auto;
+      background: #111;
+      padding: 20px;
+      border-radius: 15px;
+    }
+
+    #loginForm input[type="text"],
+    #loginForm input[type="password"] {
+      width: 90%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 10px;
+      border: none;
+      font-size: 16px;
+    }
+
+    #loginForm button {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      background-color: #00ff00;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+      color: black;
+      transition: background-color 0.3s ease;
+    }
+
+    #loginForm button:hover {
+      background-color: #00cc00;
+    }
+
+    #guestLoginBtn {
+      margin-top: 10px;
+      background-color: #444;
+      color: white;
+    }
+
+    #guestLoginBtn:hover {
+      background-color: #666;
+    }
+
+    #loginMessage {
+      margin-top: 10px;
+      height: 30px;
+      font-weight: bold;
+    }
+
+    .fancy-text {
+      font-family: 'Moo Lah Lah', cursive;
+      font-size: 22px;
+    }
   </style>
 </head>
 <body>
@@ -28,22 +159,25 @@
   <!-- Login Form -->
   <div id="loginForm">
     <h2>Login</h2>
-    <input type="text" id="username" placeholder="Email" autocomplete="username" />
+    <input type="text" id="username" placeholder="Username" autocomplete="username" />
     <input type="password" id="password" placeholder="Password" autocomplete="current-password" />
     <button id="loginBtn">Login</button>
-    <button id="signupBtn">Sign Up</button>
     <button id="guestLoginBtn">Login as Guest</button>
     <div id="loginMessage"></div>
   </div>
 
-  <!-- Firebase SDK -->
   <script type="module">
-    // Import Firebase
+    // Firebase (CDN modules)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInAnonymously } 
-      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      signInAnonymously,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getIdTokenResult } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-    // Your Firebase config
+    // Your web app's Firebase configuration (use the config you gave me)
     const firebaseConfig = {
       apiKey: "AIzaSyAJn62nD-a9f9ryy_8Xi0OJhojZ7_6RyOc",
       authDomain: "molchos-8432f.firebaseapp.com",
@@ -58,13 +192,12 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    // UI Elements
+    // UI elements
     const bar = document.getElementById('myBar');
     const progressText = document.getElementById('progressText');
     const startButton = document.getElementById('startButton');
     const loginForm = document.getElementById('loginForm');
     const loginBtn = document.getElementById('loginBtn');
-    const signupBtn = document.getElementById('signupBtn');
     const guestLoginBtn = document.getElementById('guestLoginBtn');
     const loginMessage = document.getElementById('loginMessage');
     const usernameInput = document.getElementById('username');
@@ -116,47 +249,44 @@
       loginMessage.className = fancy ? 'fancy-text' : '';
     }
 
-    // 🔐 Login with Firebase
+    function disableInputs() {
+      usernameInput.disabled = true;
+      passwordInput.disabled = true;
+      loginBtn.disabled = true;
+      guestLoginBtn.disabled = true;
+    }
+
+    // Helper: convert the "username" user input to an email to use with Firebase.
+    // This preserves your original UX: users can still type "alice" or "admin".
+    // Convention: we append a local domain to form an email (you must create these emails in Firebase Auth).
+    function usernameToEmail(username) {
+      // if user typed an email already, use it
+      if (username.includes('@')) return username;
+      // normalize to lowercase
+      return username.toLowerCase() + "@molchos.local";
+    }
+
+    // Attempt login with Firebase
     async function tryLogin() {
-      const email = usernameInput.value.trim();
+      const rawUsername = usernameInput.value.trim();
       const password = passwordInput.value;
 
-      if (!email || !password) {
-        showMessage('Please enter both email and password.', 'red');
+      if (!rawUsername || !password) {
+        showMessage('Please enter both username and password.', 'red');
         return;
       }
 
+      const email = usernameToEmail(rawUsername);
+
       try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-        showMessage(`Login successful! Welcome, ${user.email}.`);
-        disableInputs();
-      } catch (error) {
-        showMessage('Invalid email or password.', 'red');
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        // onAuthStateChanged handler below will handle successful UI updates
+      } catch (err) {
+        showMessage('Invalid username or password.', 'red');
       }
     }
 
-    // 🆕 Sign up new user
-    async function trySignup() {
-      const email = usernameInput.value.trim();
-      const password = passwordInput.value;
-
-      if (!email || !password) {
-        showMessage('Please enter email and password.', 'red');
-        return;
-      }
-
-      try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-        showMessage(`Account created! Welcome, ${user.email}.`);
-        disableInputs();
-      } catch (error) {
-        showMessage('Error creating account: ' + error.message, 'red');
-      }
-    }
-
-    // 👤 Guest login
+    // Anonymous guest login (keeps original "Guest" behaviour)
     async function tryGuestLogin() {
       try {
         await signInAnonymously(auth);
@@ -167,17 +297,52 @@
       }
     }
 
-    function disableInputs() {
-      usernameInput.disabled = true;
-      passwordInput.disabled = true;
-      loginBtn.disabled = true;
-      signupBtn.disabled = true;
-      guestLoginBtn.disabled = true;
-    }
+    // Listen for auth state and display appropriate message (including admin greeting).
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) return; // not signed in
 
-    // Event Listeners
+      // Default non-admin welcome
+      let isAdmin = false;
+      let displayNameOrEmail = user.email || 'Guest';
+
+      // If anonymous, show Guest
+      if (user.isAnonymous) {
+        showMessage('Login successful! Welcome, Guest.');
+        disableInputs();
+        return;
+      }
+
+      // Check custom claims for admin (most reliable) — requires Admin SDK to set claims.
+      try {
+        const idResult = await getIdTokenResult(user);
+        if (idResult && idResult.claims && idResult.claims.admin === true) {
+          isAdmin = true;
+        }
+      } catch (e) {
+        // ignore token inspection failures
+      }
+
+      // Also support the old behavior: if user typed "admin" and that maps to an email you created
+      // or if the account's email local-part is 'admin', treat as admin fallback:
+      try {
+        const localPart = (user.email || '').split('@')[0];
+        if (localPart === 'admin') isAdmin = true;
+      } catch (e) {}
+
+      // Show admin greeting if admin, preserving original "Willkommen Bo."
+      if (isAdmin) {
+        showMessage('Willkommen Bo.', 'lightgreen', true);
+      } else {
+        // try to display a readable name: use email local part or full email
+        const local = (user.email || '').split('@')[0];
+        const name = local || (user.displayName || 'User');
+        showMessage(`Login successful! Welcome, ${name}.`);
+      }
+
+      disableInputs();
+    });
+
     loginBtn.addEventListener('click', tryLogin);
-    signupBtn.addEventListener('click', trySignup);
     guestLoginBtn.addEventListener('click', tryGuestLogin);
 
     [usernameInput, passwordInput].forEach(input => {
