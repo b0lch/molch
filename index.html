@@ -19,13 +19,11 @@
       font-size: 2.5rem;
     }
 
-    /* Power-Icon */
     .power-icon {
       font-size: 60px;
       margin: 20px 0;
     }
 
-    /* Ladebalken */
     #loadingBarContainer {
       width: 200px;
       height: 12px;
@@ -43,7 +41,6 @@
       transition: width 0.3s ease-out;
     }
 
-    /* Login-Box */
     #loginBox {
       display: none;
       margin: 40px auto;
@@ -80,7 +77,6 @@
       background-color: #5e35b1;
     }
 
-    /* Debug-Menü */
     #debugMenu {
       display: none;
       background: #111;
@@ -110,7 +106,7 @@
 
   <!-- Login -->
   <div id="loginBox">
-    <input type="text" id="email" placeholder="Benutzername">
+    <input type="text" id="email" placeholder="E-Mail">
     <input type="password" id="password" placeholder="Passwort">
     <button onclick="login()">Login</button>
   </div>
@@ -118,25 +114,41 @@
   <!-- Debug-Menü -->
   <div id="debugMenu"></div>
 
-  <script>
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+    // TODO: Dein Firebase Config hier einfügen
+    const firebaseConfig = {
+      apiKey: "DEIN_API_KEY",
+      authDomain: "molchos-8432f.firebaseapp.com",
+      projectId: "molchos-8432f",
+      storageBucket: "molchos-8432f.appspot.com",
+      messagingSenderId: "DEINE_ID",
+      appId: "DEINE_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
     // Ladebalken Animation
-    function startLoadingBar(){
+    window.startLoadingBar = function(){
       const bar = document.getElementById('loadingBar');
       let progress = 0;
 
       const interval = setInterval(() => {
-        progress += Math.random() * 20; // zufällige Schritte
+        progress += Math.random() * 20;
         if(progress >= 100){
           progress = 100;
           clearInterval(interval);
-          // Login-Felder anzeigen
           document.getElementById('loginBox').style.display = 'block';
         }
         bar.style.width = progress + '%';
       }, 500);
-    }
+    };
 
-    // Debug-Ausgabe
+    // Debug
     function dbg(...args){
       const dbgEl = document.getElementById('debugMenu');
       if(dbgEl){
@@ -148,7 +160,6 @@
       }
     }
 
-    // Debug-Menü per Taste "d" umschalten
     document.addEventListener('keydown', (e) => {
       if(e.key.toLowerCase() === 'd'){
         const dbgEl = document.getElementById('debugMenu');
@@ -156,18 +167,21 @@
       }
     });
 
-    // Login-Logik
-    function login(){
-      const user = document.getElementById('email').value.trim();
-      const pass = document.getElementById('password').value.trim();
+    // Login mit Firebase
+    window.login = function(){
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
 
-      if(user === "admin" && pass === "admin"){
-        alert("Login erfolgreich! Willkommen bei MolchOS 🚀");
-      } else {
-        alert("Falscher Benutzername oder Passwort!");
-        dbg("Login fehlgeschlagen:", user, pass);
-      }
-    }
+      signInWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          alert("Login erfolgreich: " + userCredential.user.email);
+          dbg("Login success:", userCredential.user);
+        })
+        .catch((error) => {
+          alert("Login fehlgeschlagen: " + error.message);
+          dbg("Login error:", error.code, error.message);
+        });
+    };
   </script>
 
 </body>
