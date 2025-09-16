@@ -8,7 +8,7 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background-color: black;
+      background-color: #111;
       color: white;
       display: flex;
       flex-direction: column;
@@ -18,55 +18,33 @@
       overflow: hidden;
     }
 
-    /* Power Button */
-    .power-button {
-      font-size: 4rem;
-      cursor: pointer;
-      color: white;
+    h1 {
       margin-bottom: 20px;
-      transition: transform 0.2s ease;
-    }
-    .power-button:hover {
-      transform: scale(1.2);
     }
 
-    /* Ladebalken */
-    .progress-container {
-      width: 80%;
-      max-width: 400px;
-      height: 20px;
-      border: 2px solid white;
-      border-radius: 10px;
-      overflow: hidden;
-      margin-bottom: 20px;
-      display: none;
-    }
-    .progress-bar {
-      height: 100%;
-      width: 0%;
-      background-color: white;
-      transition: width 0.2s ease;
-    }
-
-    /* Login-Box */
-    .login-box {
-      display: none;
-      background: rgba(255, 255, 255, 0.1);
+    .card {
+      background: #1e1e1e;
       padding: 20px;
       border-radius: 10px;
+      width: 100%;
+      max-width: 350px;
       text-align: center;
-      width: 300px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
     }
-    .login-box input {
-      width: 90%;
-      padding: 10px;
-      margin: 10px 0;
-      border: none;
-      border-radius: 5px;
-    }
-    .login-box button {
+
+    input {
       width: 100%;
       padding: 10px;
+      margin: 8px 0;
+      border-radius: 5px;
+      border: none;
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
       border: none;
       border-radius: 5px;
       background: white;
@@ -75,42 +53,69 @@
       cursor: pointer;
     }
 
-    /* Debug-Menü */
-    .debug-menu {
+    button:hover {
+      background: #ddd;
+    }
+
+    /* Ladebalken */
+    #loader-container {
+      width: 100%;
+      max-width: 350px;
+      height: 20px;
+      background: #333;
+      border-radius: 10px;
+      margin: 20px auto;
+      overflow: hidden;
       display: none;
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      background: rgba(255,255,255,0.1);
+    }
+
+    #loader-bar {
+      width: 0;
+      height: 100%;
+      background: white;
+      border-radius: 10px;
+      transition: width 0.3s ease-out;
+    }
+
+    /* Debug Menü */
+    #debug {
+      display: none;
+      background: black;
+      color: lime;
       padding: 10px;
-      border-radius: 5px;
-      font-size: 14px;
+      margin-top: 20px;
+      width: 100%;
+      max-width: 400px;
+      font-size: 12px;
+      text-align: left;
+      white-space: pre-wrap;
+      border-radius: 8px;
     }
   </style>
 </head>
 <body>
+  <h1>Molchos Login</h1>
 
-  <div class="power-button" id="power-btn">⏻</div>
-
-  <div class="progress-container" id="progress-container">
-    <div class="progress-bar" id="progress-bar"></div>
-  </div>
-
-  <div class="login-box" id="login-box">
-    <h2>Login</h2>
-    <input type="text" id="email" placeholder="Email oder 'admin'">
+  <div class="card">
+    <input type="text" id="username" placeholder="Benutzername">
     <input type="password" id="password" placeholder="Passwort">
-    <button id="login-btn">Login</button>
+    <button id="login-btn">Anmelden</button>
+
+    <div id="loader-container">
+      <div id="loader-bar"></div>
+    </div>
   </div>
 
-  <div class="debug-menu" id="debug-menu">
-    <p><b>Debug Menü</b></p>
-    <p>Status: <span id="debug-status">Warte...</span></p>
-  </div>
+  <div id="debug"></div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { 
+      getAuth, 
+      signInWithEmailAndPassword, 
+      createUserWithEmailAndPassword, 
+      onAuthStateChanged 
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
     // Firebase Config
     const firebaseConfig = {
@@ -127,61 +132,83 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const powerBtn = document.getElementById("power-btn");
-    const progressContainer = document.getElementById("progress-container");
-    const progressBar = document.getElementById("progress-bar");
-    const loginBox = document.getElementById("login-box");
-    const debugMenu = document.getElementById("debug-menu");
-    const debugStatus = document.getElementById("debug-status");
+    // UI-Elemente
+    const loginBtn = document.getElementById("login-btn");
+    const loaderContainer = document.getElementById("loader-container");
+    const loaderBar = document.getElementById("loader-bar");
+    const debugBox = document.getElementById("debug");
 
-    let progress = 0;
-    let interval;
+    function logDebug(msg) {
+      debugBox.textContent += msg + "\n";
+    }
 
-    // Power Button → startet Ladebalken
-    powerBtn.addEventListener("click", () => {
-      powerBtn.style.display = "none";
-      progressContainer.style.display = "block";
+    // Ladebalken Simulation
+    function startLoader(callback) {
+      loaderContainer.style.display = "block";
+      loaderBar.style.width = "0%";
+      let progress = 0;
 
-      interval = setInterval(() => {
-        let step = Math.random() * 15; // unregelmäßig
-        progress = Math.min(progress + step, 100);
-        progressBar.style.width = progress + "%";
-
+      const interval = setInterval(() => {
+        progress += Math.floor(Math.random() * 20) + 5; // zufällig
         if (progress >= 100) {
+          progress = 100;
           clearInterval(interval);
-          setTimeout(() => {
-            progressContainer.style.display = "none";
-            loginBox.style.display = "block";
-          }, 500);
+          setTimeout(callback, 500);
         }
-      }, 400);
-    });
+        loaderBar.style.width = progress + "%";
+      }, 500);
+    }
 
-    // Login
-    document.getElementById("login-btn").addEventListener("click", async () => {
-      let emailInput = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
+    // Login + Auto-Account-Erstellung
+    loginBtn.addEventListener("click", async () => {
+      const uname = document.getElementById("username").value.trim();
+      const upass = document.getElementById("password").value.trim();
 
-      if (emailInput.toLowerCase() === "admin") {
-        emailInput = "admin@molchos.local";
+      if (!uname || !upass) {
+        alert("Bitte Benutzername und Passwort eingeben!");
+        return;
       }
 
-      try {
-        await signInWithEmailAndPassword(auth, emailInput, password);
-        window.location.href = "admin.html"; // Weiterleitung
-      } catch (error) {
-        alert("Login fehlgeschlagen: " + error.message);
+      const email = `${uname}@molchos.local`;
+      logDebug(`🔑 Versuche Login für ${email}`);
+
+      startLoader(async () => {
+        try {
+          await signInWithEmailAndPassword(auth, email, upass);
+          logDebug("✅ Login erfolgreich!");
+        } catch (err) {
+          if (err.code === "auth/user-not-found") {
+            logDebug("⚠ Benutzer nicht gefunden – erstelle neuen Account...");
+            try {
+              await createUserWithEmailAndPassword(auth, email, upass);
+              logDebug("✅ Neuer Benutzer erstellt und eingeloggt.");
+            } catch (createErr) {
+              logDebug("❌ Fehler bei Account-Erstellung: " + createErr.message);
+            }
+          } else {
+            logDebug("❌ Login Fehler: " + err.message);
+          }
+        }
+      });
+    });
+
+    // Redirect nach Login
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        if (user.email === "admin@molchos.local") {
+          window.location.href = "admin.html";
+        } else {
+          window.location.href = "user.html";
+        }
       }
     });
 
-    // Debug-Menü mit Taste "d"
+    // Debug-Menü mit Taste D
     document.addEventListener("keydown", (e) => {
-      if (e.key.toLowerCase() === "d") {
-        debugMenu.style.display =
-          debugMenu.style.display === "block" ? "none" : "block";
+      if (e.key === "d") {
+        debugBox.style.display = debugBox.style.display === "none" ? "block" : "none";
       }
     });
   </script>
-
 </body>
 </html>
