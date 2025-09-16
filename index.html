@@ -1,130 +1,160 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MolchOS</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MolchOS — Login (Debug)</title>
   <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      background-color: #0d0d0d;
-      color: white;
-      font-family: "Courier New", monospace;
-    }
-
-    h1 {
-      font-size: 3em;
-      margin-bottom: 20px;
-    }
-
-    #power-btn {
-      font-size: 4em;
-      cursor: pointer;
-      margin-bottom: 20px;
-      transition: transform 0.2s;
-    }
-
-    #power-btn:hover {
-      transform: scale(1.2);
-    }
-
-    #progress-container {
-      width: 300px;
-      height: 20px;
-      background-color: #333;
-      border-radius: 10px;
-      overflow: hidden;
-      margin-bottom: 30px;
-      display: none;
-    }
-
-    #progress-bar {
-      height: 100%;
-      width: 0%;
-      background-color: #6a5acd;
-      transition: width 0.2s;
-    }
-
-    #login-box {
-      background: #1a1a1a;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0px 0px 12px rgba(255, 255, 255, 0.2);
-      display: none;
-      width: 300px;
-    }
-
-    #login-box input {
-      width: 100%;
-      padding: 10px;
-      margin: 8px 0;
-      border: none;
-      border-radius: 5px;
-    }
-
-    #login-box button {
-      width: 100%;
-      padding: 10px;
-      background: #6a5acd;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-
-    #login-box button:hover {
-      background: #836fff;
-    }
+    body{background:#000;color:#fff;font-family:Arial;text-align:center;padding:30px}
+    h1{font-size:36px;margin-bottom:10px}
+    #power{font-size:80px;cursor:pointer;margin:20px auto}
+    #progressWrap{width:320px;height:28px;background:#333;border-radius:20px;margin:10px auto;position:relative;overflow:hidden;display:none}
+    #progressBar{height:100%;width:0;background:linear-gradient(90deg,#00ff88,#00b7ff,#9d00ff);box-shadow:0 0 12px rgba(0,200,255,0.12);transition:width .25s linear}
+    #progressText{color:#000;position:absolute;width:100%;text-align:center;top:3px;font-weight:700}
+    #loginCard{width:360px;margin:18px auto;background:#111;padding:20px;border-radius:12px;display:none;box-shadow:0 8px 30px rgba(0,0,0,0.6)}
+    input{width:100%;padding:10px;margin:8px 0;border-radius:6px;border:none;box-sizing:border-box}
+    button{background:#6a5acd;color:#fff;border:none;padding:10px 14px;border-radius:8px;cursor:pointer}
+    #msg{height:20px;margin-top:8px;font-weight:700}
+    #debugBox{display:none;background:#060606;color:#7fff7f;padding:10px;margin:16px auto;border-radius:6px;width:90%;max-width:800px;text-align:left;white-space:pre-wrap;font-family:monospace;font-size:12px;max-height:240px;overflow:auto}
+    label{display:block;text-align:left;color:#ccc;font-size:13px;margin-bottom:4px}
   </style>
 </head>
 <body>
   <h1>MolchOS</h1>
 
-  <div id="power-btn">⏻</div>
+  <div id="power" title="Start">⏻</div>
 
-  <div id="progress-container">
-    <div id="progress-bar"></div>
+  <div id="progressWrap">
+    <div id="progressBar"></div>
+    <div id="progressText">0%</div>
   </div>
 
-  <div id="login-box">
-    <input type="email" placeholder="E-Mail eingeben">
-    <input type="password" placeholder="Passwort">
-    <button>Login</button>
+  <div id="loginCard">
+    <label for="email">E-Mail</label>
+    <input id="email" type="email" placeholder="E-Mail eingeben" autocomplete="username">
+    <label for="password">Passwort</label>
+    <input id="password" type="password" placeholder="Passwort" autocomplete="current-password">
+    <button id="loginBtn">Login</button>
+    <div id="msg"></div>
   </div>
 
-  <script>
-    const powerBtn = document.getElementById("power-btn");
-    const progressBar = document.getElementById("progress-bar");
-    const progressContainer = document.getElementById("progress-container");
-    const loginBox = document.getElementById("login-box");
+  <pre id="debugBox"></pre>
 
-    powerBtn.addEventListener("click", () => {
-      // Reset
-      progressBar.style.width = "0%";
-      loginBox.style.display = "none";
-      progressContainer.style.display = "block";
+  <script type="module">
+    import { auth } from './src/firebase.js';
+    import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js';
 
+    // UI
+    const power = document.getElementById('power');
+    const progressWrap = document.getElementById('progressWrap');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const loginCard = document.getElementById('loginCard');
+    const emailInput = document.getElementById('email');
+    const passInput = document.getElementById('password');
+    const loginBtn = document.getElementById('loginBtn');
+    const msg = document.getElementById('msg');
+    const debugBox = document.getElementById('debugBox');
+
+    let debugMode = true; // true = Debugausgabe im UI
+    function dbg(...args){
+      if(!debugMode) return;
+      const t = new Date().toLocaleTimeString();
+      debugBox.style.display = 'block';
+      debugBox.textContent += `[${t}] ${args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ')}\n`;
+      debugBox.scrollTop = debugBox.scrollHeight;
+      console.log(...args);
+    }
+
+    // Random/ruckeliger Ladebalken (ähnlich deiner ersten Version)
+    async function startProgress() {
+      progressBar.style.width = '0%';
+      progressText.textContent = '0%';
+      progressWrap.style.display = 'block';
+      loginCard.style.display = 'none';
       let progress = 0;
+      dbg('startProgress: start');
+      while(progress < 100){
+        // zufällige Schritte, kleine Pause: ergibt ruckeligen Effekt
+        const step = Math.floor(Math.random()*8) + 1; // 1..8
+        progress = Math.min(100, progress + step);
+        progressBar.style.width = progress + '%';
+        progressText.textContent = Math.round(progress) + '%';
+        dbg('progress', progress, 'step', step);
+        // Wartezeit variabel (200..1200ms) für unvorhersehbaren Effekt
+        const wait = 200 + Math.floor(Math.random()*900);
+        await new Promise(r => setTimeout(r, wait));
+      }
+      dbg('startProgress: fertig');
+      // Balken ausblenden & Login zeigen
+      setTimeout(()=>{ progressWrap.style.display='none'; loginCard.style.display='block'; emailInput.focus(); }, 300);
+    }
 
-      // Random Ladebalken
-      const interval = setInterval(() => {
-        progress += Math.floor(Math.random() * 15); // zufällig +0 bis 15
-        if (progress >= 100) {
-          progress = 100;
-          clearInterval(interval);
-          setTimeout(() => {
-            loginBox.style.display = "block";
-          }, 500);
-        }
-        progressBar.style.width = progress + "%";
-      }, 300);
+    // Power click handler: startet Progress (und sperrt Knopf bis Ende)
+    let running=false;
+    power.addEventListener('click', ()=>{
+      if(running) return;
+      running = true;
+      power.style.opacity = '0.6';
+      startProgress().finally(()=> { running=false; power.style.opacity='1'; });
     });
+
+    // Login click
+    async function showMessage(text, color='lightgreen'){
+      msg.textContent = text;
+      msg.style.color = color;
+      dbg('UI msg:', text);
+    }
+
+    loginBtn.addEventListener('click', async ()=>{
+      const email = emailInput.value.trim();
+      const password = passInput.value;
+      if(!email || !password){ showMessage('Bitte E-Mail und Passwort eingeben', 'orange'); return; }
+      showMessage('Logging in…', 'lightblue');
+      dbg('attempt login', {email});
+      try {
+        const userCred = await signInWithEmailAndPassword(auth, email, password);
+        dbg('signedIn', userCred.user);
+        showMessage('Erfolgreich eingeloggt!', 'lightgreen');
+        // Weiterleitung je nach User:
+        if(userCred.user.email === 'admin@molchos.local') {
+          window.location.href = 'admin.html';
+        } else {
+          // z.B. weiter zu user-seite
+          alert('Eingeloggt als ' + userCred.user.email);
+        }
+      } catch (err) {
+        dbg('login error', err.code, err.message);
+        // Falls Benutzer nicht existiert, biete an automatisch zu registrieren
+        if(err.code === 'auth/user-not-found'){
+          // optional: automatisch anlegen — wenn du das willst, entferne confirm
+          const create = confirm('Benutzer existiert nicht. Konto erstellen?');
+          if(create){
+            try{
+              const newUser = await createUserWithEmailAndPassword(auth, email, password);
+              dbg('created', newUser.user);
+              showMessage('Account erstellt und eingeloggt!', 'lightgreen');
+            }catch(cErr){
+              dbg('create error', cErr.code, cErr.message);
+              showMessage('Fehler beim Erstellen: ' + cErr.message, 'red');
+            }
+          } else {
+            showMessage('Bitte registrieren Sie sich zuerst.', 'orange');
+          }
+        } else if(err.code === 'auth/wrong-password'){
+          showMessage('Falsches Passwort', 'red');
+        } else if(err.code === 'auth/invalid-email'){
+          showMessage('Ungültige E-Mail Adresse', 'red');
+        } else {
+          showMessage('Login fehlgeschlagen: ' + err.message, 'red');
+        }
+      }
+    });
+
+    // Taste Enter zum Einloggen
+    [emailInput, passInput].forEach(i => i.addEventListener('keydown', (e)=>{ if(e.key==='Enter') loginBtn.click(); }));
+
+    dbg('UI ready');
   </script>
 </body>
 </html>
