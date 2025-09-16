@@ -1,34 +1,79 @@
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Login</title>
+  <title>MolchOS Login</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h2>Login</h2>
-  <input id="email" type="email" placeholder="Email">
-  <input id="password" type="password" placeholder="Password">
-  <button id="loginBtn">Login</button>
+  <h1>Willkommen bei MolchOS</h1>
+
+  <div id="login-box">
+    <input type="email" id="email" placeholder="E-Mail eingeben">
+    <input type="password" id="password" placeholder="Passwort">
+    <button id="loginBtn">Login</button>
+    <p id="login-error"></p>
+  </div>
+
+  <div id="loading" style="display:none;">
+    <p>Lädt...</p>
+    <div id="progressbar">
+      <div id="progress"></div>
+    </div>
+  </div>
+
+  <!-- Versteckter Debug Button nur für Mobile -->
+  <button id="debugBtn" style="display:none;">Debug</button>
 
   <script type="module">
     import { auth } from "./src/firebase.js";
     import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
 
-    const loginBtn = document.getElementById("loginBtn");
-    loginBtn.addEventListener("click", async () => {
+    let debugMode = false;
+
+    // Debug Toggle (Taste D)
+    document.addEventListener("keydown", (e) => {
+      if (e.key.toLowerCase() === "d") {
+        debugMode = !debugMode;
+        alert("Debug-Modus: " + (debugMode ? "AN" : "AUS"));
+      }
+    });
+
+    // Debug Toggle Button (nur Mobile)
+    if (/Mobi|Android/i.test(navigator.userAgent)) {
+      document.getElementById("debugBtn").style.display = "block";
+      document.getElementById("debugBtn").addEventListener("click", () => {
+        debugMode = !debugMode;
+        alert("Debug-Modus: " + (debugMode ? "AN" : "AUS"));
+      });
+    }
+
+    // Login
+    document.getElementById("loginBtn").addEventListener("click", async () => {
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
-      try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
 
-        if (user.email === "admin@molchos.local") {
-          window.location.href = "admin.html";
-        } else {
-          alert("Willkommen " + user.email);
-        }
-      } catch (error) {
-        alert("Fehler: " + error.message);
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+
+        document.getElementById("login-box").style.display = "none";
+        document.getElementById("loading").style.display = "block";
+
+        let progress = 0;
+        const interval = setInterval(() => {
+          progress += debugMode ? 20 : 5;
+          document.getElementById("progress").style.width = progress + "%";
+          if (progress >= 100) {
+            clearInterval(interval);
+            if (email === "admin@molchos.local") {
+              window.location.href = "admin.html";
+            } else {
+              alert("Eingeloggt als User: " + email);
+            }
+          }
+        }, debugMode ? 100 : 500);
+      } catch (err) {
+        document.getElementById("login-error").innerText = "Login fehlgeschlagen: " + err.message;
       }
     });
   </script>
