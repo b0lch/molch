@@ -156,7 +156,7 @@
       'alice': 'password123',
       'bob': 'qwerty',
       'charlie': 'letmein',
-      'admin': 'password',
+      'admin': 'adminpass'  // example admin user
     };
 
     let progressInterval = null;
@@ -212,7 +212,11 @@
 
       if (users[username] && users[username] === password) {
         loginMessage.style.color = 'lightgreen';
-        loginMessage.textContent = `Login successful! Welcome, ${username}.`;
+        if (username === 'admin') {
+          loginMessage.textContent = 'Willkommen Bo.';
+        } else {
+          loginMessage.textContent = `Login successful! Welcome, ${username}.`;
+        }
         usernameInput.disabled = true;
         passwordInput.disabled = true;
         loginBtn.disabled = true;
@@ -228,7 +232,7 @@
     [usernameInput, passwordInput].forEach(input => {
       input.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
-          event.preventDefault(); // prevent form submission or page reload
+          event.preventDefault();
           tryLogin();
         }
       });
