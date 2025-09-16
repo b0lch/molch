@@ -3,9 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Molch Progress + Login</title>
-  <link href="https://fonts.googleapis.com/css2?family=Moo+Lah+Lah&display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Rock+3D&display=swap" rel="stylesheet" />
-
+  <link href="https://fonts.googleapis.com/css2?family=Moo+Lah+Lah&family=Rock+3D&display=swap" rel="stylesheet" />
   <style>
     body {
       background-color: #000;
@@ -15,11 +13,13 @@
       color: white;
       text-align: center;
     }
+
     h1 {
       font-family: 'Rock 3D', cursive;
       font-size: 100px;
       margin-top: 40px;
     }
+
     #myProgress {
       width: 25%;
       background-color: grey;
@@ -29,6 +29,7 @@
       overflow: hidden;
       position: relative;
     }
+
     #myBar {
       height: 30px;
       background-color: #fff;
@@ -36,6 +37,7 @@
       width: 0%;
       transition: width 0.5s ease;
     }
+
     #progressText {
       position: absolute;
       width: 100%;
@@ -45,6 +47,7 @@
       color: black;
       user-select: none;
     }
+
     button#startButton {
       background: transparent;
       border: none;
@@ -57,13 +60,16 @@
       transition: transform 0.2s ease;
       outline-offset: 4px;
     }
+
     button#startButton:disabled {
       cursor: default;
       opacity: 1;
     }
+
     button#startButton:hover:not(:disabled) {
       transform: scale(1.1);
     }
+
     button#startButton img {
       width: 100%;
       height: 100%;
@@ -83,6 +89,7 @@
       padding: 20px;
       border-radius: 15px;
     }
+
     #loginForm input[type="text"],
     #loginForm input[type="password"] {
       width: 90%;
@@ -92,6 +99,7 @@
       border: none;
       font-size: 16px;
     }
+
     #loginForm button {
       width: 100%;
       padding: 10px;
@@ -104,14 +112,30 @@
       color: black;
       transition: background-color 0.3s ease;
     }
+
     #loginForm button:hover {
       background-color: #00cc00;
     }
+
+    #guestLoginBtn {
+      margin-top: 10px;
+      background-color: #444;
+      color: white;
+    }
+
+    #guestLoginBtn:hover {
+      background-color: #666;
+    }
+
     #loginMessage {
       margin-top: 10px;
-      height: 20px;
-      color: red;
+      height: 30px;
       font-weight: bold;
+    }
+
+    .fancy-text {
+      font-family: 'Moo Lah Lah', cursive;
+      font-size: 22px;
     }
   </style>
 </head>
@@ -121,7 +145,7 @@
 
   <button id="startButton" aria-label="Start Progress">
     <img
-     src="https://img.icons8.com/?size=100&id=85077&format=png&color=FFFFFF"
+      src="https://img.icons8.com/?size=100&id=85077&format=png&color=FFFFFF"
       alt="Power Button Icon"
       draggable="false"
     />
@@ -138,6 +162,7 @@
     <input type="text" id="username" placeholder="Username" autocomplete="username" />
     <input type="password" id="password" placeholder="Password" autocomplete="current-password" />
     <button id="loginBtn">Login</button>
+    <button id="guestLoginBtn">Login as Guest</button>
     <div id="loginMessage"></div>
   </div>
 
@@ -147,16 +172,16 @@
     const startButton = document.getElementById('startButton');
     const loginForm = document.getElementById('loginForm');
     const loginBtn = document.getElementById('loginBtn');
+    const guestLoginBtn = document.getElementById('guestLoginBtn');
     const loginMessage = document.getElementById('loginMessage');
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
 
-    // Simple user database (username: password)
     const users = {
       'alice': 'password123',
       'bob': 'qwerty',
       'charlie': 'letmein',
-      'admin': 'adminpass'  // example admin user
+      'admin': 'adminpass'
     };
 
     let progressInterval = null;
@@ -185,7 +210,6 @@
         if (newWidth >= 100) {
           clearInterval(progressInterval);
           progressInterval = null;
-          // Show login form
           startButton.style.display = 'none';
           document.getElementById('myProgress').style.display = 'none';
           loginForm.style.display = 'block';
@@ -200,35 +224,38 @@
       startButton.disabled = true;
     });
 
+    function showMessage(msg, color = 'lightgreen', fancy = false) {
+      loginMessage.textContent = msg;
+      loginMessage.style.color = color;
+      loginMessage.className = fancy ? 'fancy-text' : '';
+    }
+
     function tryLogin() {
       const username = usernameInput.value.trim();
       const password = passwordInput.value;
 
       if (!username || !password) {
-        loginMessage.style.color = 'red';
-        loginMessage.textContent = 'Please enter both username and password.';
+        showMessage('Please enter both username and password.', 'red');
         return;
       }
 
       if (users[username] && users[username] === password) {
-        loginMessage.style.color = 'lightgreen';
         if (username === 'admin') {
-          loginMessage.textContent = 'Willkommen Bo.';
+          showMessage('Willkommen Bo.', 'lightgreen', true);
         } else {
-          loginMessage.textContent = `Login successful! Welcome, ${username}.`;
+          showMessage(`Login successful! Welcome, ${username}.`);
         }
         usernameInput.disabled = true;
         passwordInput.disabled = true;
         loginBtn.disabled = true;
+        guestLoginBtn.disabled = true;
       } else {
-        loginMessage.style.color = 'red';
-        loginMessage.textContent = 'Invalid username or password.';
+        showMessage('Invalid username or password.', 'red');
       }
     }
 
     loginBtn.addEventListener('click', tryLogin);
 
-    // Submit login on Enter key press for username and password fields
     [usernameInput, passwordInput].forEach(input => {
       input.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
@@ -236,6 +263,14 @@
           tryLogin();
         }
       });
+    });
+
+    guestLoginBtn.addEventListener('click', () => {
+      showMessage('Login successful! Welcome, Guest.');
+      usernameInput.disabled = true;
+      passwordInput.disabled = true;
+      loginBtn.disabled = true;
+      guestLoginBtn.disabled = true;
     });
 
     resetProgress();
