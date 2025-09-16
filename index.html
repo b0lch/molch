@@ -4,76 +4,95 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MolchOS</title>
-  <link rel="stylesheet" href="style.css">
   <style>
     body {
-      background-color: black;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      background-color: #0d0d0d;
       color: white;
-      text-align: center;
-      font-family: Arial, sans-serif;
+      font-family: "Courier New", monospace;
     }
 
-    .power-btn {
-      font-size: 80px;
-      margin: 20px 0;
+    h1 {
+      font-size: 3em;
+      margin-bottom: 20px;
+    }
+
+    #power-btn {
+      font-size: 4em;
       cursor: pointer;
+      margin-bottom: 20px;
+      transition: transform 0.2s;
     }
 
-    .progress-container {
-      width: 200px;
+    #power-btn:hover {
+      transform: scale(1.2);
+    }
+
+    #progress-container {
+      width: 300px;
       height: 20px;
-      background: #333;
+      background-color: #333;
       border-radius: 10px;
-      margin: 20px auto;
       overflow: hidden;
-      display: none; /* unsichtbar bis Klick */
+      margin-bottom: 30px;
+      display: none;
     }
 
-    .progress-bar {
+    #progress-bar {
       height: 100%;
       width: 0%;
-      background: #888;
-      transition: width 3s linear;
+      background-color: #6a5acd;
+      transition: width 0.2s;
     }
 
-    .login-box {
-      display: none; /* Anfangs versteckt */
-      margin-top: 30px;
-      background: #222;
+    #login-box {
+      background: #1a1a1a;
       padding: 20px;
-      border-radius: 10px;
+      border-radius: 12px;
+      box-shadow: 0px 0px 12px rgba(255, 255, 255, 0.2);
+      display: none;
       width: 300px;
-      margin-left: auto;
-      margin-right: auto;
     }
 
-    .login-box input {
-      display: block;
+    #login-box input {
       width: 100%;
       padding: 10px;
-      margin: 10px 0;
+      margin: 8px 0;
+      border: none;
+      border-radius: 5px;
     }
 
-    .login-box button {
-      background: #6a4dff;
-      border: none;
+    #login-box button {
+      width: 100%;
       padding: 10px;
+      background: #6a5acd;
       color: white;
+      border: none;
       border-radius: 5px;
       cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    #login-box button:hover {
+      background: #836fff;
     }
   </style>
 </head>
 <body>
-
   <h1>MolchOS</h1>
-  <div class="power-btn" id="power-btn">⏻</div>
 
-  <div class="progress-container" id="progress-container">
-    <div class="progress-bar" id="progress-bar"></div>
+  <div id="power-btn">⏻</div>
+
+  <div id="progress-container">
+    <div id="progress-bar"></div>
   </div>
 
-  <div class="login-box" id="login-box">
+  <div id="login-box">
     <input type="email" placeholder="E-Mail eingeben">
     <input type="password" placeholder="Passwort">
     <button>Login</button>
@@ -86,19 +105,26 @@
     const loginBox = document.getElementById("login-box");
 
     powerBtn.addEventListener("click", () => {
-      progressContainer.style.display = "block"; // Balken anzeigen
+      // Reset
+      progressBar.style.width = "0%";
+      loginBox.style.display = "none";
+      progressContainer.style.display = "block";
 
-      // Start Animation
-      setTimeout(() => {
-        progressBar.style.width = "100%";
-      }, 100);
+      let progress = 0;
 
-      // Nach 3s Login anzeigen
-      setTimeout(() => {
-        loginBox.style.display = "block";
-      }, 3100);
+      // Random Ladebalken
+      const interval = setInterval(() => {
+        progress += Math.floor(Math.random() * 15); // zufällig +0 bis 15
+        if (progress >= 100) {
+          progress = 100;
+          clearInterval(interval);
+          setTimeout(() => {
+            loginBox.style.display = "block";
+          }, 500);
+        }
+        progressBar.style.width = progress + "%";
+      }, 300);
     });
   </script>
-
 </body>
 </html>
