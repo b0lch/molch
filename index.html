@@ -35,7 +35,7 @@
       background-color: #fff;
       border-radius: 25px;
       width: 0%;
-      transition: width 0.5s ease;
+      transition: width 0.25s linear;
     }
 
     #progressText {
@@ -78,6 +78,7 @@
       pointer-events: none;
     }
 
+    /* Login form styles */
     #loginForm {
       display: none;
       margin-top: 50px;
@@ -136,6 +137,21 @@
       font-family: 'Moo Lah Lah', cursive;
       font-size: 22px;
     }
+
+    /* small debug badge to show mode */
+    #debugBadge {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: rgba(255, 0, 0, 0.15);
+      color: #ff6b6b;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      display: none;
+      pointer-events: none;
+      z-index: 9999;
+    }
   </style>
 </head>
 <body>
@@ -165,18 +181,23 @@
     <div id="loginMessage"></div>
   </div>
 
-  <!-- Firebase -->
+  <div id="debugBadge">DEBUG</div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-    // Your Firebase config
+    // ---------- Firebase config ----------
     const firebaseConfig = {
       apiKey: "AIzaSyAJn62nD-a9f9ryy_8Xi0OJhojZ7_6RyOc",
       authDomain: "molchos-8432f.firebaseapp.com",
       databaseURL: "https://molchos-8432f-default-rtdb.europe-west1.firebasedatabase.app",
       projectId: "molchos-8432f",
-      storageBucket: "molchos-8432f.firebasestorage.app",
+      storageBucket: "molchos-8432f.firebasedatabase.app",
       messagingSenderId: "863467159822",
       appId: "1:863467159822:web:f352836ffa1289f03f575f"
     };
@@ -184,6 +205,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
+    // ---------- UI references ----------
     const bar = document.getElementById('myBar');
     const progressText = document.getElementById('progressText');
     const startButton = document.getElementById('startButton');
@@ -193,12 +215,79 @@
     const loginMessage = document.getElementById('loginMessage');
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
+    const debugBadge = document.getElementById('debugBadge');
+
+    // ---------- Debug box ----------
+    let debugMode = false;
+    const debugBox = document.createElement("pre");
+    debugBox.style.background = "#111";
+    debugBox.style.color = "lime";
+    debugBox.style.padding = "10px";
+    debugBox.style.textAlign = "left";
+    debugBox.style.fontSize = "12px";
+    debugBox.style.maxHeight = "200px";
+    debugBox.style.overflowY = "auto";
+    debugBox.style.margin = "20px auto";
+    debugBox.style.width = "80%";
+    debugBox.style.display = "none";
+    debugBox.id = "debugBox";
+    document.body.appendChild(debugBox);
+
+    function logDebug(label, data = "") {
+      if (!debugMode) return;
+      const ts = new Date().toLocaleTimeString();
+      const payload = (typeof data === "object") ? JSON.stringify(data, null, 2) : String(data);
+      debugBox.textContent += `[${ts}] ${label} ${payload}\n`;
+      debugBox.scrollTop = debugBox.scrollHeight;
+    }
+
+    // ---------- Progress control ----------
+    // defaults (normal slow boot)
+    let progressSpeed = 2000; // ms per tick
+    let incrementMin = 1;     // percent min per tick
+    let incrementMax = 8;     // percent max per tick
 
     let progressInterval = null;
 
+    // ensure bar starts at 0
+    bar.style.width = '0%';
+    progressText.textContent = '0%';
+
     function setProgress(value) {
       bar.style.width = value + '%';
-      progressText.textContent = value + '%';
+      progressText.textContent = Math.round(value) + '%';
+    }
+
+    function progressTick() {
+      let currentWidth = parseFloat(bar.style.width) || 0;
+      const rand = Math.floor(Math.random() * (incrementMax - incrementMin + 1)) + incrementMin;
+      const newWidth = Math.min(currentWidth + rand, 100);
+      setProgress(newWidth);
+      logDebug("Progress tick:", { currentWidth, rand, newWidth });
+
+      if (newWidth >= 100) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+        startButton.style.display = 'none';
+        document.getElementById('myProgress').style.display = 'none';
+        loginForm.style.display = 'block';
+        usernameInput.focus();
+        logDebug("Progress completed, showing login form");
+      }
+    }
+
+    function startProgress() {
+      if (progressInterval) return;
+      progressInterval = setInterval(progressTick, progressSpeed);
+      logDebug("Started progress interval", { progressSpeed, incrementMin, incrementMax });
+    }
+
+    function restartProgressIntervalIfRunning() {
+      // Called when speed/interval parameters changed while running
+      if (!progressInterval) return;
+      clearInterval(progressInterval);
+      progressInterval = setInterval(progressTick, progressSpeed);
+      logDebug("Restarted progress interval with new speed", { progressSpeed, incrementMin, incrementMax });
     }
 
     function resetProgress() {
@@ -207,27 +296,7 @@
       setProgress(0);
     }
 
-    function startProgress() {
-      if (progressInterval) return;
-
-      progressInterval = setInterval(() => {
-        let currentWidth = parseInt(bar.style.width) || 0;
-        const randomIncrement = Math.floor(Math.random() * 8) + 1;
-        const newWidth = Math.min(currentWidth + randomIncrement, 100);
-
-        setProgress(newWidth);
-
-        if (newWidth >= 100) {
-          clearInterval(progressInterval);
-          progressInterval = null;
-          startButton.style.display = 'none';
-          document.getElementById('myProgress').style.display = 'none';
-          loginForm.style.display = 'block';
-          usernameInput.focus();
-        }
-      }, 2000);
-    }
-
+    // ---------- UI wiring ----------
     startButton.addEventListener('click', () => {
       resetProgress();
       startProgress();
@@ -238,8 +307,10 @@
       loginMessage.textContent = msg;
       loginMessage.style.color = color;
       loginMessage.className = fancy ? 'fancy-text' : '';
+      logDebug("UI message:", msg);
     }
 
+    // ---------- Auth (username -> username@molchos.local) ----------
     async function tryLogin() {
       const username = usernameInput.value.trim();
       const password = passwordInput.value;
@@ -250,32 +321,40 @@
       }
 
       const email = `${username}@molchos.local`;
+      logDebug("Attempting login for", { username, email });
 
       try {
-        await signInWithEmailAndPassword(auth, email, password);
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        logDebug("signInWithEmailAndPassword result", cred.user);
+
         if (username === 'admin') {
           showMessage('Willkommen Bo.', 'lightgreen', true);
         } else {
           showMessage(`Login successful! Welcome, ${username}.`);
         }
+
         usernameInput.disabled = true;
         passwordInput.disabled = true;
         loginBtn.disabled = true;
         guestLoginBtn.disabled = true;
       } catch (error) {
-        if (error.code === 'auth/user-not-found') {
+        logDebug("Login error:", error);
+        // create user if not found (auto-register)
+        if (error && error.code === 'auth/user-not-found') {
           try {
-            await createUserWithEmailAndPassword(auth, email, password);
+            const newUser = await createUserWithEmailAndPassword(auth, email, password);
+            logDebug("createUserWithEmailAndPassword result", newUser.user);
             showMessage(`New account created! Welcome, ${username}.`);
             usernameInput.disabled = true;
             passwordInput.disabled = true;
             loginBtn.disabled = true;
             guestLoginBtn.disabled = true;
           } catch (err) {
-            showMessage('Error creating account: ' + err.message, 'red');
+            logDebug("Error creating account:", err);
+            showMessage('Error creating account: ' + (err && err.message ? err.message : String(err)), 'red');
           }
         } else {
-          showMessage('Login failed: ' + error.message, 'red');
+          showMessage('Login failed: ' + (error && error.message ? error.message : String(error)), 'red');
         }
       }
     }
@@ -295,53 +374,37 @@
       showMessage('Guest accounts are disabled. Please choose a username.', 'red');
     });
 
-    resetProgress();
-    // Press "d" to toggle debug
-window.addEventListener("keydown", (e) => {
-  if (e.key.toLowerCase() === "d") {
-    debugMode = !debugMode;
-    debugBox.style.display = debugMode ? "block" : "none";
-    if (debugMode) {
-      debugBox.textContent = "[DEBUG] Debugging enabled\n";
-      progressSpeed = 200; // 🔥 make bar faster in debug mode
-      incrementMin = 5;
-      incrementMax = 15;
-    } else {
-      progressSpeed = 2000; // ⏳ normal slow speed
-      incrementMin = 1;
-      incrementMax = 8;
-    }
-  }
-});
+    // ---------- Debug toggle (press "d") ----------
+    window.addEventListener("keydown", (e) => {
+      // make sure single-letter 'd' toggles; don't block control combos
+      if (e.key && e.key.toLowerCase() === "d" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        debugMode = !debugMode;
+        debugBox.style.display = debugMode ? "block" : "none";
+        debugBadge.style.display = debugMode ? "block" : "none";
 
-  // Default speed settings
-  let progressSpeed = 2000; // ms
-  let incrementMin = 1;
-  let incrementMax = 8;
-  
-  function startProgress() {
-    if (progressInterval) return;
-  
-    progressInterval = setInterval(() => {
-      let currentWidth = parseInt(bar.style.width) || 0;
-      const randomIncrement = Math.floor(Math.random() * (incrementMax - incrementMin + 1)) + incrementMin;
-      const newWidth = Math.min(currentWidth + randomIncrement, 100);
-  
-      setProgress(newWidth);
-      logDebug("Progress updated", { currentWidth, newWidth });
-  
-      if (newWidth >= 100) {
-        clearInterval(progressInterval);
-        progressInterval = null;
-        startButton.style.display = 'none';
-        document.getElementById('myProgress').style.display = 'none';
-        loginForm.style.display = 'block';
-        usernameInput.focus();
-        logDebug("Progress complete, showing login form");
+        if (debugMode) {
+          // faster debug speeds
+          progressSpeed = 200;    // 200ms per tick (fast)
+          incrementMin = 5;
+          incrementMax = 15;
+          debugBox.textContent = "[DEBUG] enabled\n";
+          logDebug("Debug enabled", { progressSpeed, incrementMin, incrementMax });
+        } else {
+          // revert to normal slow boot
+          progressSpeed = 2000;
+          incrementMin = 1;
+          incrementMax = 8;
+          debugBox.textContent = "";
+          logDebug("Debug disabled, reverting speeds", { progressSpeed, incrementMin, incrementMax });
+        }
+
+        // If progress is running, restart interval to apply new speed
+        restartProgressIntervalIfRunning();
       }
-    }, progressSpeed);
-  }
+    });
 
+    // ---------- initialize ----------
+    resetProgress();
   </script>
 </body>
 </html>
