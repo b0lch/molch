@@ -15,14 +15,16 @@
     <p id="login-error"></p>
   </div>
 
+  <!-- Ladebalken Container -->
   <div id="loading" style="display:none;">
     <p>Lädt...</p>
     <div id="progressbar">
       <div id="progress"></div>
     </div>
+    <p id="progress-text">0%</p>
   </div>
 
-  <!-- Versteckter Debug Button nur für Mobile -->
+  <!-- Debug Button (nur Mobile sichtbar) -->
   <button id="debugBtn" style="display:none;">Debug</button>
 
   <script type="module">
@@ -31,7 +33,7 @@
 
     let debugMode = false;
 
-    // Debug Toggle (Taste D)
+    // Debug per Taste "D"
     document.addEventListener("keydown", (e) => {
       if (e.key.toLowerCase() === "d") {
         debugMode = !debugMode;
@@ -39,7 +41,7 @@
       }
     });
 
-    // Debug Toggle Button (nur Mobile)
+    // Debug Button für Mobile
     if (/Mobi|Android/i.test(navigator.userAgent)) {
       document.getElementById("debugBtn").style.display = "block";
       document.getElementById("debugBtn").addEventListener("click", () => {
@@ -48,7 +50,7 @@
       });
     }
 
-    // Login
+    // Login-Logik
     document.getElementById("loginBtn").addEventListener("click", async () => {
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
@@ -60,18 +62,26 @@
         document.getElementById("loading").style.display = "block";
 
         let progress = 0;
+        const step = debugMode ? 20 : 5;
+        const speed = debugMode ? 100 : 300;
+
         const interval = setInterval(() => {
-          progress += debugMode ? 20 : 5;
+          progress += step;
+          if (progress > 100) progress = 100;
+
           document.getElementById("progress").style.width = progress + "%";
+          document.getElementById("progress-text").innerText = progress + "%";
+
           if (progress >= 100) {
             clearInterval(interval);
+
             if (email === "admin@molchos.local") {
               window.location.href = "admin.html";
             } else {
               alert("Eingeloggt als User: " + email);
             }
           }
-        }, debugMode ? 100 : 500);
+        }, speed);
       } catch (err) {
         document.getElementById("login-error").innerText = "Login fehlgeschlagen: " + err.message;
       }
