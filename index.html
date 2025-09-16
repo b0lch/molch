@@ -296,6 +296,52 @@
     });
 
     resetProgress();
+    // Press "d" to toggle debug
+window.addEventListener("keydown", (e) => {
+  if (e.key.toLowerCase() === "d") {
+    debugMode = !debugMode;
+    debugBox.style.display = debugMode ? "block" : "none";
+    if (debugMode) {
+      debugBox.textContent = "[DEBUG] Debugging enabled\n";
+      progressSpeed = 200; // 🔥 make bar faster in debug mode
+      incrementMin = 5;
+      incrementMax = 15;
+    } else {
+      progressSpeed = 2000; // ⏳ normal slow speed
+      incrementMin = 1;
+      incrementMax = 8;
+    }
+  }
+});
+
+  // Default speed settings
+  let progressSpeed = 2000; // ms
+  let incrementMin = 1;
+  let incrementMax = 8;
+  
+  function startProgress() {
+    if (progressInterval) return;
+  
+    progressInterval = setInterval(() => {
+      let currentWidth = parseInt(bar.style.width) || 0;
+      const randomIncrement = Math.floor(Math.random() * (incrementMax - incrementMin + 1)) + incrementMin;
+      const newWidth = Math.min(currentWidth + randomIncrement, 100);
+  
+      setProgress(newWidth);
+      logDebug("Progress updated", { currentWidth, newWidth });
+  
+      if (newWidth >= 100) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+        startButton.style.display = 'none';
+        document.getElementById('myProgress').style.display = 'none';
+        loginForm.style.display = 'block';
+        usernameInput.focus();
+        logDebug("Progress complete, showing login form");
+      }
+    }, progressSpeed);
+  }
+
   </script>
 </body>
 </html>
