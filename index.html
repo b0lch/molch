@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Molch Progress</title>
-    <link href="https://fonts.googleapis.com/css2?family=Moo+Lah+Lah&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Rock+3D&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Moo+Lah+Lah&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Rock+3D&display=swap" rel="stylesheet" />
 
     <style>
         body {
@@ -34,54 +34,44 @@
             border-radius: 25px;
             width: 0%;
             transition: width 0.5s ease;
+            position: relative;
         }
         #progressText {
             text-align: center;
             line-height: 30px;
             font-weight: bold;
             color: black;
+            position: absolute;
+            width: 100%;
+            left: 0;
+            top: 0;
+            user-select: none;
         }
-        .Boot {
-            font-family: 'Moo Lah Lah', cursive;
-            font-size: 20px;
-            background-color: black;
-            color: white;
-            border: 2px solid #000000;
-            border-radius: 12px;
-            padding: 10px 24px;
-            cursor: pointer;
+        .BootImage {
             display: block;
-            margin: 20px auto;
+            margin: 30px auto;
+            width: 100px; /* Adjust size as needed */
+            height: auto;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            filter: invert(100%) brightness(150%); /* white icon on black background */
         }
-          .BootImage {
-          display: block;
-          margin: 30px auto;
-          width: 100px;      /* Adjust size as needed */
-          height: auto;
-          cursor: pointer;
-          transition: transform 0.2s ease;
-          filter: brightness(100%) invert(100%); /* To keep it white on black background */
-        }
-
-          .BootImage:hover {
+        .BootImage:hover {
             transform: scale(1.1); /* Slight zoom effect on hover */
         }
-
-
     </style>
 </head>
 <body>
 
     <h1>MolchOS</h1>
 
- <img
-  src="https://cdn.citypng.com/public/uploads/preview/power-on-off-white-button-icon-png-11563114816pmw6gxzpzp.png"
-  id="startButton"
-  alt="Start Button"
-  class="BootImage"
-/>
-
-
+    <!-- Updated power button image -->
+    <img
+        src="https://cdn.citypng.com/public/uploads/preview/power-on-off-white-button-icon-png-11563114816pmw6gxzpzp.png"
+        id="startButton"
+        alt="Start Button"
+        class="BootImage"
+    />
 
     <div id="myProgress">
         <div id="myBar">
@@ -124,30 +114,25 @@
                     clearInterval(progressInterval);
                     progressInterval = null;
                     alert("Fortschritt abgeschlossen!");
+                    // Re-enable button after complete, if desired:
+                    document.getElementById("startButton").disabled = false;
                 }
             }, 2000);
         }
 
         // Attach click event to button
-        document.getElementById("startButton").addEventListener("click", function () {
+        const startButton = document.getElementById("startButton");
+        startButton.addEventListener("click", function () {
             resetProgress();
             startProgress();
-        // Replace the button text with an "ON" image and disable further clicks
-        this.disabled = true;
-        const img = document.createElement('img');
-        img.alt = 'On';
-        img.style.height = '36px';
-        img.style.display = 'block';
-        img.style.margin = '0 auto';
-        img.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="40"><rect rx="12" width="120" height="40" fill="%23000"/><text x="60" y="27" font-family="Moo Lah Lah, cursive" font-size="18" fill="%2300ff00" text-anchor="middle">ON</text></svg>';
-        this.textContent = '';
-        this.style.padding = '4px';
-        this.style.border = 'none';
-        this.style.background = 'transparent';
-        this.appendChild(img);
+            // Disable the button while running
+            this.disabled = true;
+            this.style.cursor = 'default';
         });
-        // Hide the percentage text inside the progress bar
-        progressText.style.display = 'none';
+
+        // Hide the percentage text inside the progress bar initially
+        progressText.style.display = 'block';
+
         // Optional: Reset on page load
         resetProgress();
     </script>
