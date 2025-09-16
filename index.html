@@ -110,6 +110,19 @@
         document.getElementById("startButton").addEventListener("click", function () {
             resetProgress();
             startProgress();
+        // Replace the button text with an "ON" image and disable further clicks
+        this.disabled = true;
+        const img = document.createElement('img');
+        img.alt = 'On';
+        img.style.height = '36px';
+        img.style.display = 'block';
+        img.style.margin = '0 auto';
+        img.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="40"><rect rx="12" width="120" height="40" fill="%23000"/><text x="60" y="27" font-family="Moo Lah Lah, cursive" font-size="18" fill="%2300ff00" text-anchor="middle">ON</text></svg>';
+        this.textContent = '';
+        this.style.padding = '4px';
+        this.style.border = 'none';
+        this.style.background = 'transparent';
+        this.appendChild(img);
         });
         // Hide the percentage text inside the progress bar
         progressText.style.display = 'none';
